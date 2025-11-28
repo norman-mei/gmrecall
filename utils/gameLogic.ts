@@ -36,8 +36,8 @@ export const getRandomOpening = (excludeNames: string[] = [], difficulty: Diffic
 export const normalizeString = (str: string): string => {
   return str
     .toLowerCase()
-    .replace(/['".,-]/g, '') // Remove punctuation
-    .replace(/\b(the|opening|defense|game|system|attack|gambit)\b/g, '') // Remove filler words for loose matching
+    .replace(/['".,\\-\\/()]/g, '') // Remove punctuation, dashes, slashes, parentheses
+    .replace(/\b(the|opening|defense|game|system|attack|gambit|variation)\b/g, '') // Remove filler words for loose matching
     .replace(/\s+/g, '') // Remove spaces
     .trim();
 };
