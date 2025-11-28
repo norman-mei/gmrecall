@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, MouseEvent } from 'react';
 import { XCircle, Lock, Loader2 } from 'lucide-react';
 import { validateSolutionPassword } from '@/app/actions';
 
@@ -38,9 +38,21 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
         }
     };
 
+    const handleOverlayClick = (e: MouseEvent<HTMLDivElement>) => {
+        if (e.target === e.currentTarget) {
+            onClose();
+        }
+    };
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-zinc-700 w-full max-w-md overflow-hidden">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            onMouseDown={handleOverlayClick}
+        >
+            <div
+                className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-zinc-700 w-full max-w-md overflow-hidden"
+                onMouseDown={(e) => e.stopPropagation()}
+            >
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-zinc-800">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <Lock size={20} className="text-blue-500" />

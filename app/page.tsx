@@ -102,6 +102,7 @@ export default function Page() {
   );
   const [openingStats, setOpeningStats] = useState<{ livesLost: number; hintsUsed: number }>({ livesLost: 0, hintsUsed: 0 });
   const [autoAdvanceSeconds, setAutoAdvanceSeconds] = useState<number | null>(null);
+  const [isSolutionRevealed, setIsSolutionRevealed] = useState(false);
   const [animationDelay, setAnimationDelay] = useState<number>(() =>
     readLocalStorage('chess-animation-delay', 800),
   );
@@ -523,6 +524,11 @@ export default function Page() {
     persistLocalNumber('moves-sidebar-width', movesSidebarWidth);
   }, [movesSidebarWidth]);
 
+  useEffect(() => {
+    // Reset reveal state whenever a new opening is loaded.
+    setIsSolutionRevealed(false);
+  }, [gameState.currentOpening?.name]);
+
   const handleResetLayout = () => {
     setRightSidebarWidth(320);
     setMovesSidebarWidth(300);
@@ -530,6 +536,12 @@ export default function Page() {
 
   const handleShowSolution = () => {
     if (!gameState.currentOpening) return;
+    setIsPasswordModalOpen(true);
+  };
+
+  const revealSolution = () => {
+    if (!gameState.currentOpening) return;
+    setIsSolutionRevealed(true);
     // Reveal the solution
     setFeedbackState('correct');
     setInputStr(gameState.currentOpening.name);
@@ -659,7 +671,7 @@ export default function Page() {
       <PasswordModal
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}
-        onSuccess={handleShowSolution}
+        onSuccess={revealSolution}
       />
 
       <header className="absolute top-0 w-full p-6 flex justify-end items-start z-40 pointer-events-none">
@@ -720,15 +732,16 @@ export default function Page() {
                     useHint={useHint}
                     feedbackState={feedbackState}
                     autoAdvanceSeconds={autoAdvanceSeconds}
-                    handleSkipClick={handleSkipClick}
-                    onShowSolution={handleShowSolution}
-                    INITIAL_LIVES={INITIAL_LIVES}
-                    MAX_HINTS={MAX_HINTS}
-                    isLoadedSolved={isLoadedSolved}
-                    onManualAdvance={handleManualAdvance}
-                  />
-                </ChessBoardView>
-              </div>
+                  handleSkipClick={handleSkipClick}
+                  onShowSolution={handleShowSolution}
+                  INITIAL_LIVES={INITIAL_LIVES}
+                  MAX_HINTS={MAX_HINTS}
+                  isLoadedSolved={isLoadedSolved}
+                  isSolutionRevealed={isSolutionRevealed}
+                  onManualAdvance={handleManualAdvance}
+                />
+              </ChessBoardView>
+            </div>
             </motion.div>
           )}
 
