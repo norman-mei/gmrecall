@@ -1,0 +1,200 @@
+201	1 c4 g6	A10 Explore	English Opening-Great Snake Variation
+202	1 c4 g6 2 e4 e5	A10 Explore	English Opening-Great Snake Variation-Adorjan Defence
+203	1 c4 Nc6	A10 Explore	English Opening-Anglo-Lithuanian Variation
+204	1 c4 Nf6	A15 Explore	English Opening-Anglo-Indian Defence
+205	1 c4 Nf6 2 b4	A15 Explore	English Opening-Anglo-Indian Defence-Orangutan/Polish Variation
+206	1 c4 Nf6 2 e4	A15 Explore	English Opening-Anglo-Indian Defence-Achilles-Omega Gambit
+207	1 c4 Nf6 2 g4	A15 Explore	English Opening-Anglo-Indian Defence-Unnamed Gambit
+208	1 c4 Nf6 2 Nc3	A16 Explore	English Opening-Anglo-Indian Defence-Queen's Knight Variation
+209	1 c4 Nf6 2 Nc3 d5	A16 Explore	English Opening-Anglo-Indian Defence-Queen's Knight Variation-Anglo-Grünfeld/Golombek Defence
+210	1 c4 Nf6 2 Nc3 d5 3 cxd5 Nxd5 4 g3 c5 5 Bg2 Nc7	A16 Explore	English Opening-Queen's Knight Variation-Anglo-Grünfeld Defence-Rubinstein Variation
+211	1 c4 Nf6 2 Nc3 d5 3 cxd5 Nxd5 4 g3 g6 5 Bg2 Nb6	A16 Explore	English Opening-Anglo-Indian Defence-Anglo-Grünfeld Defence-Czech Defence
+212	1 c4 Nf6 2 Nc3 d5 3 cxd5 Nxd5 4 g3 g6 5 Bg2 Nxc3	A16 Explore	English Opening-Anglo-Indian Defence-Anglo-Grünfeld Defence-Smyslov Defence
+213	1 c4 Nf6 2 Nc3 d5 3 cxd5 Nxd5 4 Nf3 g6 5 g3 Bg7 6 Bg2 e5	A16 Explore	English Opening-Anglo-Indian Defence-Anglo-Grünfeld Defence-Korchnoi Variation
+214	1 c4 Nf6 2 Nc3 e6	A17 Explore	English Opening-Anglo-Indian Defence-Queen's Knight Variation-Hedgehog System
+215	1 c4 Nf6 2 Nc3 e6 3 e4	A18 Explore	English Opening-Anglo-Indian Defence-Queen's Knight Variation-Flohr-Mikenas-Carls Variation #2
+216	1 c4 Nf6 2 Nc3 e6 3 e4 c5	A19 Explore	English Opening-Anglo-Indian Defence-Flohr-Mikenas-Carls Variation #2-Sicilian Variation
+217	1 c4 Nf6 2 Nc3 e6 3 e4 c5 4 e5 Ng8	A19 Explore	English Opening-Flohr-Mikenas-Carls Variation #2-Sicilian Variation-Nei Gambit
+218	1 c4 Nf6 2 Nc3 e6 3 e4 d5	A18 Explore	English Opening-Queen's Knight Variation-Flohr-Mikenas-Carls Variation #2-French Variation
+219	1 c4 Nf6 2 Nc3 e6 3 e4 d5 4 e5	A18 Explore	English Opening-Flohr-Mikenas-Carls Variation #2-French Variation-Flohr Variation
+220	1 c4 Nf6 2 Nc3 e6 3 e4 e5	A19 Explore	English Opening-Anglo-Indian Defence-Flohr-Mikenas-Carls Variation #2-Sicilian Variation
+221	1 c4 Nf6 2 Nc3 e6 3 e4 Nc6	A18 Explore	English Opening-Queen's Knight Variation-Flohr-Mikenas-Carls Variation #2-Kevitz Defence
+222	1 c4 Nf6 2 Nc3 e6 3 Nf3 b6	A17 Explore	English Opening-Anglo-Indian Defence-Hedgehog System-Queen's Indian Formation
+223	1 c4 Nf6 2 Nc3 e6 3 Nf3 b6 4 e4 Bb7 5 Bd3	A17 Explore	English Opening-Hedgehog System-Queen's Indian Formation-Romanishin Variation
+224	1 c4 Nf6 2 Nc3 e6 3 Nf3 Bb4	A17 Explore	English Opening-Anglo-Indian Defence-Hedgehog System-Nimzo-English/Nimzovich Opening
+225	1 c4 Nf6 2 Nc3 e6 3 Nf3 Bb4 4 g4	A18 Explore	English Opening-Hedgehog System-Nimzo-English Opening-Zviagintsev-Krasenkov Attack
+226	1 c4 Nf6 2 Nc3 g6 3 Nf3 Bg7 4 e4	A17 Explore	English Opening-Anglo-Indian Defence-Queen's Knight Variation-Anti-Anti-Grünfeld Variation
+227	1 c4 Nf6 2 Nf3	A15 Explore	English Opening-Anglo-Indian Defence-King's Knight Variation
+228	1 c4 Nf6 2 Nf3 b6	A15 Explore	English Opening-Anglo-Indian Defence-King's Knight Variation-Queen's Indian Formation
+229	1 c4 Nf6 2 Nf3 d5	A15 Explore	English Opening-Anglo-Indian Defence-King's Knight Variation-Scandinavian Defence
+230	1 c4 Nf6 2 Nf3 d5 3 cxd5 Nxd5	A15 Explore	English Opening-King's Knight Variation-Scandinavian Defence-Exchange Variation
+231	1 c4 Nf6 2 Nf3 d6	A15 Explore	English Opening-Anglo-Indian Defence-King's Knight Variation-Old Indian Formation
+232	1 c4 Nf6 2 Nf3 e6 3 g3 a6	A15 Explore	English Opening-Anglo-Indian Defence-King's Knight Variation-Romanishin Variation
+233	1 c4 Nf6 2 Nf3 e6 3 g3 a6 4 Bg2 b5	A13 Explore	English Opening-Anglo-Indian Defence-King's Knight Variation-Romanishin Gambit
+234	1 c4 Nf6 2 Nf3 e6 3 g3 b6 4 Bg2 Bb7	A13 Explore	English Opening-Anglo-Indian Defence-King's Knight Variation-Queen's Indian Formation
+235	1 c4 Nf6 2 Nf3 g6	A15 Explore	English Opening-Anglo-Indian Defence-King's Knight Variation-King's Indian Formation
+236	1 c4 Nf6 2 Nf3 g6 3 g3 b6 4 Bg2 Bb7	A15 Explore	English Opening-King's Knight Variation-King's Indian Formation-Double Fianchetto Variation
+237	1 c4 Nf6 2 Nf3 g6 3 g3 Bg7 4 Bg2 0-0	A15 Explore	English Opening-King's Knight Variation-King's Indian Formation-King's Fianchetto Variation
+238	1 c4 Nf6 2 Nf3 g6 3 g3 c6	A15 Explore	English Opening-King's Knight Variation-King's Indian Formation-Slav Formation
+239	1 c4 Nf6 2 Nf3 g6 3 g3 d5	A15 Explore	English Opening-King's Knight Variation-King's Indian Formation-Gruenfeld Formation
+240	1 d3	A00 Explore	Mieses Opening
+241	1 d3 c5 2 Nc3 Nc6 3 g3	A00 Explore	Mieses Opening-Venezolana Opening
+242	1 d3 d5 2 Nc3 Nc6 3 g3	A00 Explore	Mieses Opening-Venezolana Variation
+243	1 d3 e5	A00 Explore	Mieses Opening-Reversed Rat Variation
+244	1 d3 e5 2 Bd2	A00 Explore	Mieses Opening-Reversed Rat Variation-Valencia Opening
+245	1 d3 e5 2 Nd2	A00 Explore	Mieses Opening-Reversed Rat Variation-Valencia Opening
+246	1 d3 g6 2 g4	A00 Explore	Mieses Opening-Myers Spike Attack
+247	1 d4	A40 Explore	Queen's Pawn
+248	1 d4 a6 2 c4 b5 3 e4 e6 4 cxb5 axb5	A40 Explore	Queen's Pawn-St. George Defence-St. Georgs Gambit
+249	1 d4 b5	A40 Explore	Queen's Pawn-Polish Defence
+250	1 d4 b5 2 e4 Bb7 3 Bxb5	A40 Explore	Queen's Pawn-Polish Defence-Spassky Gambit Accepted
+251	1 d4 b6	A40 Explore	Queen's Pawn-English #2/Queen Fianchetto/Owen Defence
+252	1 d4 b6 2 c4 Bb7 3 Nc3 e5	A40 Explore	Queen's Pawn-English Defence #2-Eastbourne Gambit
+253	1 d4 b6 2 c4 c5 3 d5 e6 4 e4 b5 5 cxb5 f5	A50 Explore	Queen's Pawn-English Defence #2-Blumenfeld-Hiva Gambit
+254	1 d4 c5	A43 Explore	Queen's Pawn-Old Benoni Defence
+255	1 d4 c5 2 b4	A43 Explore	Queen's Pawn-Old Benoni Defence-Zilbermints-Benoni/Nakamura Gambit
+256	1 d4 c5 2 c4 cxd4 3 e3	A43 Explore	Queen's Pawn-Old Benoni Defence-Liedmann Gambit
+257	1 d4 c5 2 c4 e6	A43 Explore	Queen's Pawn-Old Benoni Defence-Franco-Benoni Variation
+258	1 d4 c5 2 d5 d6 3 Nc3 g6	A43 Explore	Queen's Pawn-Old Benoni Defence-Schmid's System
+259	1 d4 c5 2 d5 e5	A44 Explore	Queen's Pawn-Old Benoni Defence-Pawn Thrust Variation
+260	1 d4 c5 2 d5 e5 3 e4 d6	A44 Explore	Queen's Pawn-Old Benoni Defence-Pawn Thrust Variation-Semi-Benoni/Blockade/Russian Variation
+261	1 d4 c5 2 d5 e6 3 e4	A43 Explore	Queen's Pawn-Franco-Benoni/Franco-Sicilian Defence
+262	1 d4 c5 2 d5 f5	A43 Explore	Queen's Pawn-Old Benoni Defence-Mujannah/Clarendon Court Formation
+263	1 d4 c5 2 d5 f5 3 e4	A43 Explore	Queen's Pawn-Old Benoni Defence-Mujannah Formation-Benoni-Staunton Gambit
+264	1 d4 c5 2 d5 Na6	A43 Explore	Queen's Pawn-Old Benoni Defence-Jaffe's Folly/Snail Variation
+265	1 d4 c5 2 d5 Nf6	A43 Explore	Queen's Pawn-Old Benoni Defence-Benoni-Indian Defence
+266	1 d4 c5 2 d5 Nf6 3 c4 Ne4	A56 Explore	Queen's Pawn-Old Benoni Defence-Benoni-Indian Defence-The Vulture Defence
+267	1 d4 c5 2 d5 Nf6 3 Nc3 Qa5	A43 Explore	Queen's Pawn-Old Benoni Defence-Benoni-Indian Defence-Woozle Defence
+268	1 d4 c5 2 d5 Nf6 3 Nf3	A43 Explore	Queen's Pawn-Old Benoni Defence-Benoni-Indian Defence-Kingside Move Order
+269	1 d4 c5 2 d5 Nf6 3 Nf3 c4	A43 Explore	Old Benoni Defence-Benoni-Indian Defence-Kingside Move Order-Hawk/Habichd Defence
+270	1 d4 c5 2 dxc5	A43 Explore	Queen's Pawn-Old Benoni Defence-Benoni Gambit Accepted
+271	1 d4 c5 2 dxc5 b6	A43 Explore	Queen's Pawn-Old Benoni Defence-Benoni Gambit Accepted-Cormorant Gambit
+272	1 d4 c5 2 dxc5 Na6	A43 Explore	Queen's Pawn-Old Benoni Defence-Benoni Gambit Accepted-Schlenker Defence
+273	1 d4 c5 2 Nf3 cxd4 3 b4	A56 Explore	Queen's Pawn-Old Benoni Defence-Zilbermints-Benoni Gambit
+274	1 d4 c5 2 Nf3 cxd4 3 b4 e5	A56 Explore	Queen's Pawn-Old Benoni Defence-Zilbermints-Benoni Gambit-Tamarkin Countergambit
+275	1 d4 c6 2 c4 d6	A41 Explore	Queen's Pawn-Anglo-Slav Opening
+276	1 d4 d5	D00 Explore	Queen's Pawn
+277	1 d4 d5 2 Bf4	D00 Explore	Queen's Pawn-Sarratt/Mason Attack
+278	1 d4 d5 2 Bf4 c5	D00 Explore	Queen's Pawn-Sarratt Attack-Steinitz Countergambit
+279	1 d4 d5 2 Bf4 c5 3 e4	D00 Explore	Queen's Pawn-Sarratt Attack-Steinitz Countergambit-Morris Countergambit
+280	1 d4 d5 2 Bg5	D00 Explore	Queen's Pawn-Levitsky Attack
+281	1 d4 d5 2 Bg5 Bg4	D00 Explore	Queen's Pawn-Levitsky Attack-Welling Variation
+282	1 d4 d5 2 Bg5 h6 3 Bh4 c6 4 Nf3 Qb6	D00 Explore	Queen's Pawn-Levitsky Attack-Euwe Variation-Modern Line
+283	1 d4 d5 2 c4	D06 Explore	Queen's Pawn-Queen's Gambit
+284	1 d4 d5 2 c4 b5	D06 Explore	Queen's Pawn-Queen's Gambit Declined-Zilbermints Gambit
+285	1 d4 d5 2 c4 Bf5	D06 Explore	Queen's Pawn-Queen's Gambit Declined-Keres/Grau/Sahovic/Baltic Defence
+286	1 d4 d5 2 c4 Bf5 3 cxd5 Bxb1 4 Qa4+ c6 5 dxc6 Nxc6	D31 Explore	Queen's Pawn-Queen's Gambit Declined-Keres Defence-Argentinian Gambit
+287	1 d4 d5 2 c4 Bf5 3 cxd5 Bxb1 4 Qa4+ c6 5 dxc6 Nxc6 6 Rxb1	D31 Explore	Queen's Gambit Declined-Keres Defence-Argentinian Gambit-Argentine Variation
+288	1 d4 d5 2 c4 Bf5 3 Nc3 e6 4 Nf3 c6	D06 Explore	Queen's Pawn-Queen's Gambit Declined-Keres Defence-Pseudo-Slav Defence
+289	1 d4 d5 2 c4 Bf5 3 Nc3 e6 4 Nf3 Nc6	D06 Explore	Queen's Pawn-Queen's Gambit Declined-Keres Defence-Pseudo-Chigorin Variation
+290	1 d4 d5 2 c4 Bf5 3 Nc3 e6 4 Qb3	D06 Explore	Queen's Pawn-Queen's Gambit Declined-Keres Defence-Queen Attack Deferred
+291	1 d4 d5 2 c4 Bf5 3 Qb3	D06 Explore	Queen's Pawn-Queen's Gambit Declined-Keres Defence-Queen Attack
+292	1 d4 d5 2 c4 c5	D02 Explore	Queen's Pawn-Queen's Gambit Declined-Symmetrical/Austrian Defence
+293	1 d4 d5 2 c4 c5 3 cxd5 Nf6	D02 Explore	Queen's Pawn-Queen's Gambit Declined-Austrian Defence-Gusev Countergambit
+294	1 d4 d5 2 c4 c5 3 cxd5 Nf6 4 e4 Nxe4 5 dxc5 Qa5+	D02 Explore	Queen's Gambit Declined-Austrian Defence-Gusev Countergambit-Haberditz Variation
+295	1 d4 d5 2 c4 c5 3 dxc5 d4	D02 Explore	Queen's Pawn-Queen's Gambit Declined-Austrian Defence-Salvio Countergambit
+296	1 d4 d5 2 c4 c6	D10 Explore	Queen's Pawn-Queen's Gambit Declined-Slav Defence
+297	1 d4 d5 2 c4 c6 3 cxd5	D10 Explore	Queen's Pawn-Queen's Gambit Declined-Slav Defence-Classical Exchange Variation
+298	1 d4 d5 2 c4 c6 3 e4	B12 Explore	Queen's Pawn-Queen's Gambit Declined-Slav Defence-Diemer Gambit
+299	1 d4 d5 2 c4 c6 3 Nc3 dxc4 4 e4	D10 Explore	Queen's Pawn-Queen's Gambit Declined-Slav Defence-Alekhine Attack
+300	1 d4 d5 2 c4 c6 3 Nc3 e5	D10 Explore	Queen's Pawn-Queen's Gambit Declined-Slav Defence-Winawer Countergambit
+301	1 d4 d5 2 c4 c6 3 Nc3 e5 4 e4	D10 Explore	Queen's Gambit Declined-Slav Defence-Winawer Countergambit-Anti-Winawer Gambit
+302	1 d4 d5 2 c4 c6 3 Nc3 Nf6 4 Nf3 e6 5 e3 Nbd7 6 Qc2 Bd6 7 g4	D45	Queen's Gambit Declined-Semi-Slav Defence-Shabalov-Shirov Gambit
+303	1 d4 d5 2 c4 c6 3 Nf3	D11 Explore	Queen's Pawn-Queen's Gambit Declined-Slav Defence-Modern/Rubinstein Line
+304	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Bg5	D11 Explore	Queen's Gambit Declined-Slav Defence-Modern Line-Bonet Gambit
+305	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 cxd5 (cxd5)	D13 Explore	Queen's Gambit Declined-Slav Defence-Modern Line-Exchange Variation
+306	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 cxd5 cxd5 5 Nc3 Nc6 6 Bf4 Bf5	D14 Explore	Queen's Gambit Declined-Modern Line-Exchange Variation-Symmetrical Line
+307	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 cxd5 cxd5 5 Nc3 Nc6 6 Bf4 Bf5 7 e3 e6 8 Qb3 Bb4	D14 Explore	Queen's Gambit Declined-Exchange Variation-Symmetrical Line-Trifunovic Variation
+308	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 e3	D11 Explore	Queen's Gambit Declined-Slav Defence-Modern Line-Quiet Variation
+309	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 e3 Bf5	D12 Explore	Queen's Gambit Declined-Modern Line-Quiet Variation-Schallopp/Delmar Defence
+310	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 e3 Bf5 5 cxd5 cxd5 6 Nc3	D12 Explore	Queen's Gambit Declined-Quiet Variation-Schallopp Defence-Exchange Variation
+311	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 e3 Bf5 5 cxd5 cxd5 6 Nc3 e6 7 Ne5 Nfd7	D12 Explore	Queen's Gambit Declined-Schallopp Defence-Exchange Variation-Amsterdam Variation
+312	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 e3 Bf5 5 cxd5 cxd5 6 Qb3 Qc8 7 Bd2 e6 8 Na3	D12 Explore	Queen's Gambit Declined-Quiet Variation-Schallopp Defence-Landau Variation
+313	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 e3 Nbd2 e6 6 Be2 Bd6 7 c5	D12 Explore	Queen's Gambit Declined-Quiet Variation-Delmar Defence-Breyer Variation
+314	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 e3 Bg4	D12 Explore	Queen's Gambit Declined-Modern Line-Quiet Variation-Pin Defence
+315	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nbd2	D11 Explore	Queen's Gambit Declined-Slav Defence-Modern Line-Breyer Variation
+316	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3	D15 Explore	Queen's Gambit Declined-Slav Defence-Modern Line-3 Knights Variation
+317	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 a6	D15 Explore	Queen's Gambit Declined-Modern Line-3 Knights Variation-Chameleon Variation
+318	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 a6 5 c5	D15 Explore	Queen's Gambit Declined-3 Knights Variation-Chameleon Variation-Advance System
+319	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4	D15 Explore	Queen's Gambit Declined-Slav Defence Accepted-3 Knights Variation-2 Knights Attack
+320	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4	D16 Explore	Queen's Gambit Declined-3 Knights Variation-2 Knights Attack-Alapin Variation
+321	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Bf5	D17 Explore	Queen's Gambit Declined-2 Knights Attack-Alapin Variation-Czech Defence
+322	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Bf5 6 e3	D18 Explore	Queen's Gambit Declined-Alapin Variation-Czech Defence-Dutch/Classical System
+323	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Bf5 6 e3 e6 7 Bxc4 Bb4 8 0-0	D19 Explore	Queen's Gambit Declined-Alapin Variation-Czech Defence-Dutch System
+324	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Bf5 6 e3 e6 7 Bxc4 Bb4 8 0-0 0-0 9 Qe2	D19 Explore	Queen's Gambit Declined-Czech Defence-Dutch System-Main Line
+325	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Bf5 6 e3 e6 7 Bxc4 Bb4 8 0-0 0-0 9 Qe2 Ne4 10 g4	D19 Explore	Queen's Gambit Declined-Dutch System-Main Line-Sämisch Variation
+326	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Bf5 6 e3 Na6	D18 Explore	Queen's Gambit Declined-Czech Defence-Dutch System-Lasker Variation
+327	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Bf5 6 Ne5	D17 Explore	Queen's Gambit Declined-Alapin Variation-Czech Defence-Krause Attack
+328	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Bf5 6 Ne5 e6	D17 Explore	Queen's Gambit Declined-Czech Defence-Krause Attack-Wiesbaden Variation
+329	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Bf5 6 Ne5 e6 7 f3 Bb4 8 e4	D17 Explore	Queen's Gambit Declined-Krause Attack-Wiesbaden Variation-Sharp Line
+330	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Bf5 6 Ne5 Na6 7 e4	D17 Explore	Queen's Gambit Declined-Czech Defence-Krause Attack-Fazekas Gambit
+331	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Bf5 6 Ne5 Nbd7 7 Nxc4 Qc7 8 g3 e5	D17 Explore	Queen's Gambit Declined-Czech Defence-Krause Attack-Carlsbad Variation
+332	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Bf5 6 Ne5 Nbd7 7 Nxc4 Qc7 8 g3 e5 9 dxe5 Nxe5 10 Bf4 Nfd7 11 Bg2 g5	D17	Queen's Gambit Declined-Krause Attack-Carlsbad Variation-Morozevich Variation
+333	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Bf5 6 Nh4	D17	Queen's Gambit Declined-Alapin Variation-Czech Defence-Bled Attack
+334	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Bg4	D16	Queen's Gambit Declined-2 Knights Attack-Alapin Variation-Steiner Variation
+335	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Bg4 6 e3 b5 7 Bd2 a5	D16	Queen's Gambit Declined-Alapin Variation-Steiner Variation-Abraham Variation
+336	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 e6	D16	Queen's Gambit Declined-2 Knights Attack-Alapin Variation-Soultanbeieff/Soultanbéiev Variation
+337	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 a4 Na6 (6 e4 Bg4)	D16	Queen's Gambit Declined-2 Knights Attack-Alapin Variation-Smyslov Variation
+338	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 e3	D15	Queen's Gambit Declined-3 Knights Variation-2 Knights Attack-Alekhine Variation
+339	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 e4	D15	Queen's Gambit Declined-3 Knights Variation-2 Knights Attack-Slav/Geller Gambit
+340	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 dxc4 5 e4 b5 6 e5	D15	Queen's Gambit Declined-2 Knights Attack-Slav Gambit-Tolush-Geller Gambit
+341	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 g6	D15	Queen's Gambit Declined-Modern Line-3 Knights Variation-Schlechter Variation
+342	1 d4 d5 2 c4 c6 3 Nf3 Nf6 4 Nc3 Qb6	D15	Queen's Gambit Declined-Modern Line-3 Knights Variation-Süchting Variation
+343	1 d4 d5 2 c4 dxc4	D20 Explore	Queen's Pawn-Queen's Gambit Accepted
+344	1 d4 d5 2 c4 dxc4 3 e3	D20	Queen's Pawn-Queen's Gambit Accepted-Old Variation
+345	1 d4 d5 2 c4 dxc4 3 e3 e5 4 Bxc4 exd4 5 Qb3 Qe7 6 a3	D20	Queen's Pawn-Queen's Gambit Accepted-Old Variation-Billinger Gambit
+346	1 d4 d5 2 c4 dxc4 3 e3 e5 4 Bxc4 exd4 5 Qb3 Qe7 6 Kf1	D20	Queen's Pawn-Queen's Gambit Accepted-Old Variation-Korchnoi Gambit
+347	1 d4 d5 2 c4 dxc4 3 e3 e5 4 Bxc4 exd4 5 Qb3 Qe7 6 Nd2	D20	Queen's Pawn-Queen's Gambit Accepted-Old Variation-Novikov Gambit
+348	1 d4 d5 2 c4 dxc4 3 e3 e5 4 Bxc4 exd4 5 Qb3 Qe7 6 Nf3	D20	Queen's Pawn-Queen's Gambit Accepted-Old Variation-Christensen Gambit
+349	1 d4 d5 2 c4 dxc4 3 e4	D20	Queen's Pawn-Queen's Gambit Accepted-Saduleto/Central Variation
+350	1 d4 d5 2 c4 dxc4 3 e4 b5	D20	Queen's Pawn-Queen's Gambit Accepted-Saduleto Variation-Greco Variation
+351	1 d4 d5 2 c4 dxc4 3 e4 c5	D20	Queen's Pawn-Queen's Gambit Accepted-Saduleto Variation-Rubinstein Defence
+352	1 d4 d5 2 c4 dxc4 3 e4 c5 4 d5 b5	D20	Queen's Gambit Accepted-Saduleto Variation-Rubinstein Defence-Yefimov Gambit
+353	1 d4 d5 2 c4 dxc4 3 e4 c5 4 d5 Nf6 5 Nc3 b5	D20	Queen's Gambit Accepted-Saduleto Variation-Rubinstein Defence-Linares Variation
+354	1 d4 d5 2 c4 dxc4 3 e4 e5	D20	Queen's Pawn-Queen's Gambit Accepted-Saduleto Variation-McDonnel Defence
+355	1 d4 d5 2 c4 dxc4 3 e4 e5 4 Bxc4	D20	Queen's Gambit Accepted-Saduleto Variation-McDonnel Defence-Somov Gambit
+356	1 d4 d5 2 c4 dxc4 3 e4 f5	D20	Queen's Pawn-Queen's Gambit Accepted-Saduleto Variation-Schwartz Defence
+357	1 d4 d5 2 c4 dxc4 3 e4 Nc6	D20	Queen's Pawn-Queen's Gambit Accepted-Saduleto Variation-Modern Defence
+358	1 d4 d5 2 c4 dxc4 3 e4 Nf6	D20	Queen's Pawn-Queen's Gambit Accepted-Saduleto Variation-Alekhine System
+359	1 d4 d5 2 c4 dxc4 3 Nc3 c5 4 d5 Nf6 5 Nf3 e6 6 e4 exd5 7 e5	D20	Queen's Pawn-Queen's Gambit Accepted-Prianishenmo Gambit
+360	1 d4 d5 2 c4 dxc4 3 Nf3	D21	Queen's Pawn-Queen's Gambit Accepted-Normal Variation
+361	1 d4 d5 2 c4 dxc4 3 Nf3 a6	D21	Queen's Pawn-Queen's Gambit Accepted-Normal Variation-Alekhine Defence
+362	1 d4 d5 2 c4 dxc4 3 Nf3 a6 4 e3	D22	Queen's Pawn-Queen's Gambit Accepted-Normal Variation-Alekhine Defence
+363	1 d4 d5 2 c4 dxc4 3 Nf3 a6 4 e3 b5	D22	Queen's Gambit Accepted-Normal Variation-Alekhine Defence-Haberditz Variation
+364	1 d4 d5 2 c4 dxc4 3 Nf3 a6 4 e3 Bg4 5 Bxc4 e6 6 d5	D22	Queen's Gambit Accepted-Normal Variation-Alekhine Defence-Alatortsev Variation
+365	1 d4 d5 2 c4 dxc4 3 Nf3 a6 4 e4	D21	Queen's Gambit Accepted-Normal Variation-Alekhine Defence-Borisenko-Furman Variation
+366	1 d4 d5 2 c4 dxc4 3 Nf3 b5	D21	Queen's Pawn-Queen's Gambit Accepted-Normal Variation-Ericson/Slav Gambit
+367	1 d4 d5 2 c4 dxc4 3 Nf3 c5	D21	Queen's Pawn-Queen's Gambit Accepted-Normal Variation-Gunsberg Defence
+368	1 d4 d5 2 c4 dxc4 3 Nf3 c5 4 d5 Nf6 5 Nc3 e6 6 e4 exd5 7 e5	D24	Queen's Gambit Accepted-Normal Variation-Gunsberg Defence-Prianishenmo Gambit
+369	1 d4 d5 2 c4 dxc4 3 Nf3 e6	D21	Queen's Pawn-Queen's Gambit Accepted-Normal Variation-Rosenthal Variation
+370	1 d4 d5 2 c4 dxc4 3 Nf3 Nd7	D21	Queen's Pawn-Queen's Gambit Accepted-Normal Variation-Godes Variation
+371	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6	D23	Queen's Pawn-Queen's Gambit Accepted-Normal Variation
+372	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3	D25	Queen's Pawn-Queen's Gambit Accepted-Normal Variation
+373	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 Be6	D25	Queen's Pawn-Queen's Gambit Accepted-Normal Variation-Flohr/Winawer Defece
+374	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 Bg4	D25	Queen's Pawn-Queen's Gambit Accepted-Normal Variation-Janowski-Larsen Variation
+375	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6	D26	Queen's Pawn-Queen's Gambit Accepted-Normal Variation-Traditional System
+376	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5	D26	Queen's Gambit Accepted-Normal Variation-Traditional System-Classical Defence
+377	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5 6 0-0 a6	D27	Queen's Gambit Accepted-Traditional System-Classical Defence-Main Line
+378	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5 6 0-0 a6 7 a4	D27	Queen's Gambit Accepted-Classical Defence-Main Line-Rubinstein Variation
+379	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5 6 0-0 a6 7 dxc5 Bxc5	D27	Queen's Gambit Accepted-Traditional System-Classical Defence-Main Line
+380	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5 6 0-0 a6 7 e4	D27	Queen's Gambit Accepted-Classical Defence-Main Line-Geller/Russian Gambit
+381	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5 6 0-0 a6 7 Qe2	D28	Queen's Gambit Accepted-Classical Defence-Main Line-Alekhine System
+382	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5 6 0-0 a6 7 Qe2 b5	D28	Queen's Gambit Accepted-Classical Defence-Alekhine System-Except Main Line
+383	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5 6 0-0 a6 7 Qe2 b5 8 Bb3 Bb7	D29	Queen's Gambit Accepted-Classical Defence-Alekhine System-Except Main Line
+384	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5 6 0-0 a6 7 Qe2 b5 8 Bb3 Bb7 9 Rd1 Nbd7 10 Nc3 Bd6	D29	Queen's Gambit Accepted-Alekhine System-Except Main Line-Smyslov Variation
+385	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5 6 0-0 a6 7 Qe2 b5 8 Bb3 Nc6 9 Rd1 c4 10 Bc2 Nb4 11 Nc3 Nxc2 12 Qxc2 Bb7 13 d5 Qc7	D28	Queen's Gambit Accepted-Alekhine System-Except Main Line-Flohr Variation
+386	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5 6 0-0 a6 7 Qe2 Nc6 8 dxc5 Bxc5 9 e4 b5 10 e5	D28	Queen's Gambit Accepted-Classical Defence-Alekhine System-Furman Variation
+387	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5 6 0-0 a6 7 Qe2 Nc6 8 Rd1 b5 9 Bb3 c4 10 Bc2 Nb4 11 Nc3 Nxc2 12 Qxc2 Bb7 13 d5 Qc7	D28	Queen's Gambit Accepted-Classical Defence-Alekhine System-Flohr Variation
+388	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5 6 0-0 cxd4	D26	Queen's Gambit Accepted-Traditional System-Classical Defence-Steinitz/Exchange Variation
+389	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5 6 0-0 Nc6	D26	Queen's Gambit Accepted-Traditional System-Classical Defence-Development Variation
+390	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5 6 Qe2	D26	Queen's Gambit Accepted-Traditional System-Classical Defence-Primitive Furman Variation
+391	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 e6 5 Bxc4 c5 6 Qe2 a6 7 dxc5 Bxc5 8 0-0 Nc6 9 e4 b5 10 e5	D26	Queen's Gambit Accepted-Classical Defence-Primitive Furman Variation-Furman Variation
+392	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 e3 g6	D25	Queen's Pawn-Queen's Gambit Accepted-Normal Variation-Smyslov Variation
+393	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 Nc3	D24	Queen's Pawn-Queen's Gambit Accepted-Normal Variation-Showalter Variation
+394	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 Nc3 a6 5 e4	D24	Queen's Gambit Accepted-Normal Variation-Showalter Variation-Bogoljubov Defence
+395	1 d4 d5 2 c4 dxc4 3 Nf3 Nf6 4 Qa4+	D23	Queen's Pawn-Queen's Gambit Accepted-Normal Variation-Mannheim Variation
+396	1 d4 d5 2 c4 dxc4 3 Qa4+	D20	Queen's Pawn-Queen's Gambit Accepted-Accelerated Mannheim Variation
+397	1 d4 d5 2 c4 e5	D08 Explore	Queen's Pawn-Queen's Gambit Declined-Albin Countergambit
+398	1 d4 d5 2 c4 e5 3 dxe5 d4 4 e3 Bb4+ 5 Bd2 dxe3	D08	Queen's Pawn-Queen's Gambit Declined-Albin Countergambit-Lasker Trap
+399	1 d4 d5 2 c4 e5 3 dxe5 d4 4 Nf3	D08	Queen's Pawn-Queen's Gambit Declined-Albin Countergambit-Normal Line
+400	1 d4 d5 2 c4 e5 3 dxe5 d4 4 Nf3 c5	D08	Queen's Gambit Declined-Albin Countergambit-Normal Line-Tartakower Defence
