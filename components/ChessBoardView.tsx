@@ -83,7 +83,7 @@ const ChessBoardView: React.FC<ChessBoardViewProps> = ({
           const capRank = move.color === 'w' ? rankNum - 1 : rankNum + 1;
           capturedSquare = `${file}${capRank}` as any;
         }
-        for (const [id, piece] of next.entries()) {
+        for (const [id, piece] of Array.from(next.entries())) {
           if (piece.square === capturedSquare) {
             next.delete(id);
             break;
@@ -93,7 +93,7 @@ const ChessBoardView: React.FC<ChessBoardViewProps> = ({
 
       // Move the piece
       let moverId: string | null = null;
-      for (const [id, piece] of next.entries()) {
+      for (const [id, piece] of Array.from(next.entries())) {
         if (piece.square === move.from && piece.color === move.color) {
           moverId = id;
           break;
@@ -130,7 +130,7 @@ const ChessBoardView: React.FC<ChessBoardViewProps> = ({
             ? 'f8'
             : 'd8';
 
-        for (const [id, piece] of next.entries()) {
+        for (const [id, piece] of Array.from(next.entries())) {
           if (piece.square === rookFrom && piece.type === 'r' && piece.color === move.color) {
             next.set(id, { ...piece, square: rookTo });
             break;

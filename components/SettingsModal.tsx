@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Moon, Sun, Map, Volume2, VolumeX, Zap, BarChart3, Settings as SettingsIcon } from 'lucide-react';
+import { X, Moon, Sun, Map, Volume2, VolumeX, Zap, BarChart3, Settings as SettingsIcon, Github } from 'lucide-react';
 import { GameSettings, PlayerStats, Difficulty, GameRecord } from '../types';
 
 interface SettingsModalProps {
@@ -45,7 +45,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onAnimationDelayChange,
   onResetLayout,
 }) => {
-  const [activeTab, setActiveTab] = useState<'settings' | 'stats'>('settings');
+  const [activeTab, setActiveTab] = useState<'settings' | 'stats' | 'credits'>('settings');
 
   if (!isOpen) return null;
 
@@ -122,6 +122,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2 ${activeTab === 'stats' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-700'}`}
             >
               <BarChart3 size={16} /> Stats
+            </button>
+            <button
+              onClick={() => setActiveTab('credits')}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2 ${activeTab === 'credits' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-700'}`}
+            >
+              <Github size={16} /> Credits
             </button>
           </div>
           <button
@@ -342,6 +348,36 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* CREDITS TAB */}
+          {activeTab === 'credits' && (
+            <div className="space-y-4 text-gray-700 dark:text-gray-200">
+              <div className="bg-gray-50 dark:bg-zinc-700/50 p-5 rounded-xl border border-gray-100 dark:border-zinc-600">
+                <p className="text-sm font-semibold">Built by Norman Mei</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  Thanks for playing GM Recall. Follow updates or contribute on GitHub.
+                </p>
+              </div>
+
+              <a
+                href="https://github.com/norman-mei/gmrecall"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-blue-300 dark:hover:border-blue-500 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-gray-100 dark:bg-zinc-700">
+                    <Github size={20} className="text-gray-800 dark:text-gray-200" />
+                  </div>
+                  <div>
+                    <p className="font-semibold">View the GitHub repo</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">github.com/norman-mei/gmrecall</p>
+                  </div>
+                </div>
+                <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">Open</span>
+              </a>
             </div>
           )}
 
