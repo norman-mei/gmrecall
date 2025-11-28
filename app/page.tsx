@@ -1,10 +1,10 @@
 'use client';
 
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Heart, Lightbulb, RefreshCw, Settings, Trophy, XCircle } from 'lucide-react';
+import { Heart, Lightbulb, RefreshCw, Settings, Trophy, XCircle, Trash2 } from 'lucide-react';
 import { History } from 'lucide-react';
 
 import SettingsModal from '@/components/SettingsModal';
@@ -26,7 +26,7 @@ type SessionEntry = {
   livesLost: number;
   hintsUsed: number;
   scoreAfter: number;
-  outcome: 'solved' | 'skipped' | 'failed';
+  outcome: 'solved' | 'skipped' | 'failed' | 'unfinished';
 };
 
 const DEFAULT_SETTINGS: GameSettings = {
@@ -67,12 +67,17 @@ export default function Page() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [historyTab, setHistoryTab] = useState<'session' | 'past'>('session');
   const [inputStr, setInputStr] = useState('');
+  const [historySearch, setHistorySearch] = useState('');
+  const [historySort, setHistorySort] = useState('recent');
 
   const [settings, setSettings] = useState<GameSettings>(() => {
     const stored = readLocalStorage('chess-settings', DEFAULT_SETTINGS);
-    return { ...DEFAULT_SETTINGS, ...stored };
+    const storedDifficulty = readLocalStorage<Difficulty>(
+      'chess-last-difficulty',
+      stored.difficulty ?? DEFAULT_SETTINGS.difficulty,
+    );
+    return { ...DEFAULT_SETTINGS, ...stored, difficulty: storedDifficulty };
   });
   const [stats, setStats] = useState<PlayerStats>(() =>
     readLocalStorage('chess-stats', DEFAULT_STATS),
@@ -107,6 +112,10 @@ export default function Page() {
   useEffect(() => {
     persistLocalStorage('chess-settings', settings);
   }, [settings]);
+
+  useEffect(() => {
+    persistLocalStorage('chess-last-difficulty', settings.difficulty);
+  }, [settings.difficulty]);
 
   useEffect(() => {
     persistLocalStorage('chess-stats', stats);
@@ -155,7 +164,6 @@ export default function Page() {
     });
     setFeedbackState('none');
     setInputStr('');
-    setSessionHistory([]);
     setOpeningStats({ livesLost: 0, hintsUsed: 0 });
   };
 
@@ -192,7 +200,8 @@ export default function Page() {
     e.preventDefault();
     if (!inputStr.trim() || gameState.status !== 'playing' || !gameState.currentOpening) return;
 
-    setStats((prev) => ({ ...prev, totalGuesses: prev.totalGuesses + 1 }));
+    // Don't increment totalGuesses here to avoid double counting or missing auto-advance.
+    // We'll do it in handleCorrectGuess and handleIncorrectGuess.
 
     const isCorrect = checkGuess(inputStr, gameState.currentOpening.name);
 
@@ -210,7 +219,11 @@ export default function Page() {
     const statsSnapshot = { ...openingStats };
     const nextScore = gameState.score + 1;
 
-    setStats((prev) => ({ ...prev, correctGuesses: prev.correctGuesses + 1 }));
+    setStats((prev) => ({
+      ...prev,
+      correctGuesses: prev.correctGuesses + 1,
+      totalGuesses: prev.totalGuesses + 1, // Count as a guess
+    }));
     setFeedbackState('correct');
 
     setTimeout(() => {
@@ -247,6 +260,7 @@ export default function Page() {
     setFeedbackState('incorrect');
     const newLivesLost = openingStats.livesLost + 1;
     setOpeningStats((prev) => ({ ...prev, livesLost: newLivesLost }));
+    setStats((prev) => ({ ...prev, totalGuesses: prev.totalGuesses + 1 })); // Count as a guess
 
     setTimeout(() => {
       setGameState((prev) => {
@@ -397,11 +411,23 @@ export default function Page() {
         setFeedbackState('none');
       }
     }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputStr, gameState.currentOpening, gameState.status]);
 
-  const loadOpening = (openingName: string, moves: string) => {
+  const handleManualAdvance = () => {
+    clearAutoAdvance();
+    if (
+      gameState.status === 'playing' &&
+      gameState.currentOpening &&
+      checkGuess(inputStr, gameState.currentOpening.name)
+    ) {
+      handleCorrectGuess();
+    }
+  };
+
+  const [isLoadedSolved, setIsLoadedSolved] = useState(false);
+
+  const loadOpening = (openingName: string, moves: string, outcome: string) => {
     // Find the full opening object if possible, or construct a temporary one
     // Since we only have name and moves in history, we'll use that.
     // We need to be careful if the opening is "???" - wait, the history entry has the REAL name stored,
@@ -429,16 +455,43 @@ export default function Page() {
       difficulty: 'Medium' as Difficulty, // Dummy
     };
 
+    // Save current game as unfinished if playing
+    if (gameState.status === 'playing' && gameState.currentOpening && gameState.currentOpening.name !== openingName) {
+      const currentOp = gameState.currentOpening;
+      const statsSnapshot = { ...openingStats };
+      setSessionHistory((prev) => [
+        ...prev,
+        {
+          name: currentOp.name,
+          moves: currentOp.moves,
+          livesLost: statsSnapshot.livesLost,
+          hintsUsed: statsSnapshot.hintsUsed,
+          scoreAfter: gameState.score,
+          outcome: 'unfinished',
+        },
+      ]);
+      setOpeningStats({ livesLost: 0, hintsUsed: 0 });
+    }
+
+    const isSolved = outcome === 'solved';
+    setIsLoadedSolved(isSolved);
+
     setGameState(prev => ({
       ...prev,
       status: 'playing',
       currentOpening: openingToLoad,
-      message: 'Loaded from history',
+      message: isSolved ? 'Loaded from history' : 'Unfinished',
       hintsRemaining: MAX_HINTS, // Reset hints? Or keep? Let's reset for a fresh try/review.
       lives: prev.lives > 0 ? prev.lives : 1, // Ensure at least 1 life if game over?
     }));
-    setFeedbackState('none');
-    setInputStr('');
+
+    if (isSolved) {
+      setFeedbackState('correct');
+      setInputStr('You already solved this opening!');
+    } else {
+      setFeedbackState('none');
+      setInputStr('');
+    }
     setIsHistoryOpen(false);
   };
 
@@ -514,6 +567,74 @@ export default function Page() {
   // Let's use flex for easier resizing.
 
 
+  const filteredAndSortedHistory = useMemo(() => {
+    const filtered = sessionHistory.filter((entry) => {
+      if (!historySearch) return true;
+      // Lenient search: remove non-alphanumeric, lowercase
+      const normalizeForSearch = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const searchNorm = normalizeForSearch(historySearch);
+      const nameNorm = normalizeForSearch(entry.name);
+      const movesNorm = normalizeForSearch(entry.moves);
+
+      return nameNorm.includes(searchNorm) || movesNorm.includes(searchNorm);
+    });
+
+    let sorted = [...filtered];
+    if (historySort === 'recent') {
+      sorted.reverse();
+    } else if (historySort === 'oldest') {
+      // Keep as is
+    } else if (historySort === 'a-z') {
+      sorted.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (historySort === 'z-a') {
+      sorted.sort((a, b) => b.name.localeCompare(a.name));
+    } else if (historySort === 'status-desc') {
+      const priority = { unfinished: 0, skipped: 1, failed: 2, solved: 3 };
+      sorted.sort((a, b) => priority[a.outcome] - priority[b.outcome]);
+    } else if (historySort === 'status-asc') {
+      const priority = { solved: 0, failed: 1, skipped: 2, unfinished: 3 };
+      sorted.sort((a, b) => priority[a.outcome] - priority[b.outcome]);
+    }
+    return sorted;
+  }, [sessionHistory, historySearch, historySort]);
+
+  const wrongGuesses = Math.max(stats.totalGuesses - stats.correctGuesses, 0);
+
+  const averageScore = useMemo(() => {
+    if (gameHistory.length === 0) return 0;
+    const totalScore = gameHistory.reduce((sum, game) => sum + game.score, 0);
+    return totalScore / gameHistory.length;
+  }, [gameHistory]);
+
+  const averageGuessesPerGame = useMemo(() => {
+    if (stats.gamesPlayed === 0) return 0;
+    return stats.totalGuesses / stats.gamesPlayed;
+  }, [stats.gamesPlayed, stats.totalGuesses]);
+
+  const recentGames = useMemo(
+    () => [...gameHistory].sort((a, b) => b.timestamp - a.timestamp).slice(0, 3),
+    [gameHistory],
+  );
+
+  const sessionStats = useMemo(() => {
+    const totals = sessionHistory.reduce(
+      (acc, entry) => {
+        acc.openingsSeen += 1;
+        acc.hintsUsed += entry.hintsUsed;
+        acc.livesLost += entry.livesLost;
+        return acc;
+      },
+      { openingsSeen: 0, hintsUsed: 0, livesLost: 0 },
+    );
+
+    return {
+      openingsSeen: totals.openingsSeen + (gameState.status === 'playing' ? 1 : 0),
+      hintsUsed: totals.hintsUsed + openingStats.hintsUsed,
+      livesLost: totals.livesLost + openingStats.livesLost,
+    };
+  }, [sessionHistory, openingStats, gameState.status]);
+
+
   return (
     <div className="min-h-screen w-full bg-gray-50 dark:bg-zinc-900 text-gray-800 dark:text-gray-100 transition-colors duration-500 font-sans flex flex-col overflow-hidden">
       <SettingsModal
@@ -524,6 +645,12 @@ export default function Page() {
         settings={settings}
         updateSettings={(k, v) => setSettings((prev) => ({ ...prev, [k]: v }))}
         stats={stats}
+        currentStreak={gameState.score}
+        averageScore={averageScore}
+        averageGuessesPerGame={averageGuessesPerGame}
+        wrongGuesses={wrongGuesses}
+        recentGames={recentGames}
+        sessionStats={sessionStats}
         animationDelay={animationDelay}
         onAnimationDelayChange={setAnimationDelay}
         onResetLayout={handleResetLayout}
@@ -579,6 +706,7 @@ export default function Page() {
                   showCoords={settings.showCoordinates}
                   animationEnabled={settings.animationEnabled}
                   animationDelay={animationDelay}
+                  soundEnabled={settings.soundEnabled}
                   sidebarWidth={movesSidebarWidth}
                   onSidebarWidthChange={setMovesSidebarWidth}
                   rightSidebarWidth={rightSidebarWidth}
@@ -596,6 +724,8 @@ export default function Page() {
                     onShowSolution={handleShowSolution}
                     INITIAL_LIVES={INITIAL_LIVES}
                     MAX_HINTS={MAX_HINTS}
+                    isLoadedSolved={isLoadedSolved}
+                    onManualAdvance={handleManualAdvance}
                   />
                 </ChessBoardView>
               </div>
@@ -675,151 +805,138 @@ export default function Page() {
                 </button>
               </div>
 
-              <div className="px-6 pt-4 shrink-0">
-                <div className="flex space-x-6 border-b border-gray-200 dark:border-zinc-800">
-                  <button
-                    onClick={() => setHistoryTab('session')}
-                    className={`pb-3 text-sm font-bold transition-colors border-b-2 ${historyTab === 'session'
-                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                      }`}
+              <div className="px-6 pt-4 shrink-0 space-y-3">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      placeholder="Search history..."
+                      value={historySearch}
+                      onChange={(e) => setHistorySearch(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 bg-gray-100 dark:bg-zinc-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                    />
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.3-4.3" />
+                      </svg>
+                    </div>
+                  </div>
+                  <select
+                    value={historySort}
+                    onChange={(e) => setHistorySort(e.target.value)}
+                    className="px-3 py-2 bg-gray-100 dark:bg-zinc-800 border-none rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
                   >
-                    Current Session
-                  </button>
-                  <button
-                    onClick={() => setHistoryTab('past')}
-                    className={`pb-3 text-sm font-bold transition-colors border-b-2 ${historyTab === 'past'
-                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                      }`}
-                  >
-                    Past Games
-                  </button>
+                    <option value="recent">Recent</option>
+                    <option value="oldest">Oldest</option>
+                    <option value="a-z">A-Z</option>
+                    <option value="z-a">Z-A</option>
+                    <option value="status-desc">Status (Priority)</option>
+                    <option value="status-asc">Status (Solved)</option>
+                  </select>
                 </div>
               </div>
 
               <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
-                {historyTab === 'session' && (
-                  <>
-                    {sessionHistory.length === 0 && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 italic text-center py-8">
-                        No openings played in this session yet.
-                      </p>
-                    )}
-                    {sessionHistory.slice().reverse().map((entry, idx) => (
-                      <div key={`${entry.name}-${idx}`} className="group">
-                        <div className="flex flex-col gap-3 py-2">
-                          <div className="flex flex-wrap items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span
-                                  className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${entry.outcome === 'solved'
-                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                    : entry.outcome === 'skipped'
-                                      ? 'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-gray-400'
-                                      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                    }`}
-                                >
-                                  {entry.outcome}
-                                </span>
-                              </div>
-                              <h4 className="text-lg font-bold text-gray-900 dark:text-white truncate">
-                                {entry.outcome === 'solved' ? entry.name : '???'}
-                              </h4>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1 break-all">
-                                {entry.moves}
-                              </p>
-                            </div>
-
-                            <button
-                              onClick={() => loadOpening(entry.name, entry.moves)}
-                              className="px-3 py-1.5 text-xs font-bold bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors shrink-0"
+                {sessionHistory.length === 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 italic text-center py-8">
+                    No openings played in this session yet.
+                  </p>
+                ) : (
+                  <div className="flex justify-end mb-2">
+                    <button
+                      onClick={() => setSessionHistory([])}
+                      className="text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors flex items-center gap-1.5 font-medium"
+                      title="Clear History"
+                    >
+                      <Trash2 size={14} />
+                      Clear History
+                    </button>
+                  </div>
+                )}
+                {filteredAndSortedHistory.map((entry, idx) => (
+                  <div key={`${entry.name}-${idx}`} className="group">
+                    <div className="flex flex-col gap-3 py-2">
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span
+                              className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${entry.outcome === 'solved'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : entry.outcome === 'skipped'
+                                  ? 'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-gray-400'
+                                  : entry.outcome === 'unfinished'
+                                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                }`}
                             >
-                              Load
-                            </button>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                            {entry.livesLost > 0 && (
-                              <span className="flex items-center gap-1 text-red-500 dark:text-red-400">
-                                <Heart size={12} className="fill-current" /> -{entry.livesLost}
-                              </span>
-                            )}
-                            {entry.hintsUsed > 0 && (
-                              <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
-                                <Lightbulb size={12} className="fill-current" /> {entry.hintsUsed}
-                              </span>
-                            )}
-                            <span className="ml-auto font-mono opacity-60">
-                              Score: {entry.scoreAfter}
+                              {entry.outcome}
                             </span>
                           </div>
+                          <h4 className="text-lg font-bold text-gray-900 dark:text-white truncate">
+                            {entry.outcome === 'solved' ? entry.name : '???'}
+                          </h4>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1 break-all">
+                            {entry.moves}
+                          </p>
                         </div>
-                        {idx < sessionHistory.length - 1 && (
-                          <hr className="border-gray-100 dark:border-zinc-800 mt-2" />
-                        )}
-                      </div>
-                    ))}
-                  </>
-                )}
 
-                {historyTab === 'past' && (
-                  <>
-                    {gameHistory.length === 0 ? (
-                      <div className="text-center py-10 text-gray-400">
-                        <p>No past games recorded.</p>
+                        <button
+                          onClick={() => loadOpening(entry.name, entry.moves, entry.outcome)}
+                          disabled={gameState.currentOpening?.name === entry.name}
+                          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors shrink-0 ${gameState.currentOpening?.name === entry.name
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-zinc-800 dark:text-gray-500'
+                            : 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40'
+                            }`}
+                        >
+                          {gameState.currentOpening?.name === entry.name ? 'Loaded' : 'Load'}
+                        </button>
                       </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <div className="flex justify-end">
-                          <button
-                            onClick={() => setGameHistory([])}
-                            className="text-xs text-red-500 hover:underline flex items-center gap-1"
-                          >
-                            Clear History
-                          </button>
+
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400 justify-end">
+                        <div className="flex items-center gap-3 ml-auto">
+                          {entry.livesLost > 0 && (
+                            <span className="flex items-center gap-1 text-red-500 dark:text-red-400">
+                              <Heart size={12} className="fill-current" /> -{entry.livesLost}
+                            </span>
+                          )}
+                          {entry.hintsUsed > 0 && (
+                            <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+                              <Lightbulb size={12} className="fill-current" /> {entry.hintsUsed}
+                            </span>
+                          )}
+                          <span className="font-mono opacity-60">
+                            Score: {entry.scoreAfter}
+                          </span>
                         </div>
-                        {gameHistory.slice().reverse().map((game) => (
-                          <div key={game.id} className="bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-gray-100 dark:border-zinc-700">
-                            <div className="flex justify-between items-start mb-2">
-                              <div>
-                                <p className="text-xs text-gray-400">{formatDate(game.timestamp)}</p>
-                                <div className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mt-1 ${difficultyColors[game.difficulty] ?? 'text-gray-600 bg-gray-100 dark:bg-zinc-700 dark:text-gray-200'}`}>
-                                  {game.difficulty}
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-lg font-black text-blue-600 dark:text-blue-400">Score: {game.score}</p>
-                              </div>
-                            </div>
-                            {game.openingsSolved.length > 0 && (
-                              <div className="mt-2">
-                                <p className="text-xs font-bold text-gray-500 mb-1">Solved:</p>
-                                <div className="flex flex-wrap gap-1">
-                                  {game.openingsSolved.map((op, i) => (
-                                    <span key={i} className="px-2 py-1 bg-white dark:bg-zinc-700 rounded-md text-xs border border-gray-200 dark:border-zinc-600 text-gray-700 dark:text-gray-200">
-                                      {op}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ))}
                       </div>
+                    </div>
+                    {idx < filteredAndSortedHistory.length - 1 && (
+                      <hr className="border-gray-100 dark:border-zinc-800 mt-2" />
                     )}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+                  </div>
+                ))}
+              </div >
+            </div >
+          </div >
+        )
+        }
 
         <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
           <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl dark:bg-blue-500/5"></div>
           <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-3xl dark:bg-purple-500/5"></div>
         </div>
-      </main>
-    </div>
+      </main >
+    </div >
   );
 }

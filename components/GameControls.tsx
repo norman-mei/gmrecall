@@ -16,6 +16,8 @@ interface GameControlsProps {
     onShowSolution: () => void;
     INITIAL_LIVES: number;
     MAX_HINTS: number;
+    isLoadedSolved: boolean;
+    onManualAdvance: () => void;
 }
 
 const GameControls: React.FC<GameControlsProps> = ({
@@ -30,6 +32,8 @@ const GameControls: React.FC<GameControlsProps> = ({
     onShowSolution,
     INITIAL_LIVES,
     MAX_HINTS,
+    isLoadedSolved,
+    onManualAdvance,
 }) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -67,6 +71,9 @@ const GameControls: React.FC<GameControlsProps> = ({
             <div className="bg-white dark:bg-zinc-800 p-4 rounded-2xl shadow-md border border-gray-100 dark:border-zinc-700">
                 <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Can you name the opening?</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Watch the moves, type the opening, hit Enter.</p>
+                {gameState.message === 'Unfinished' && (
+                    <p className="text-sm font-bold text-yellow-600 dark:text-yellow-400 mt-2">Unfinished</p>
+                )}
             </div>
             <div className="grid grid-cols-3 gap-4">
                 <div className="bg-white dark:bg-zinc-800 p-4 rounded-2xl shadow-md border border-gray-100 dark:border-zinc-700 text-center">
@@ -116,13 +123,13 @@ const GameControls: React.FC<GameControlsProps> = ({
                             transition: { duration: 0.4 },
                         } as any)}
                     >
-                        <div className="relative bg-white dark:bg-zinc-800 rounded-xl border-2 shadow-lg transition-all duration-300 overflow-hidden
+                        <div className={`relative bg-white dark:bg-zinc-800 rounded-xl border-2 shadow-lg transition-all duration-300 overflow-hidden
               ${feedbackState === 'correct'
-                ? 'border-green-500'
-                : feedbackState === 'incorrect'
-                  ? 'border-red-500'
-                  : 'border-gray-200 dark:border-zinc-600 focus-within:border-blue-500 dark:focus-within:border-blue-400'
-              }"
+                                ? 'border-green-500'
+                                : feedbackState === 'incorrect'
+                                    ? 'border-red-500'
+                                    : 'border-gray-200 dark:border-zinc-600 focus-within:border-blue-500 dark:focus-within:border-blue-400'
+                            }`}
                         >
                             <textarea
                                 ref={textareaRef}
@@ -131,7 +138,7 @@ const GameControls: React.FC<GameControlsProps> = ({
                                 onKeyDown={handleKeyDown}
                                 placeholder="Name this opening..."
                                 autoFocus
-                                readOnly={autoAdvanceSeconds !== null}
+                                readOnly={autoAdvanceSeconds !== null || isLoadedSolved}
                                 rows={1}
                                 className={`w-full p-5 pr-14 bg-transparent outline-none text-xl font-semibold resize-none block
                   ${feedbackState === 'correct'
@@ -143,20 +150,28 @@ const GameControls: React.FC<GameControlsProps> = ({
                                 style={{ minHeight: '60px' }}
                             />
 
-                            <div className="absolute right-3 bottom-3 flex items-center gap-2">
+                            {/*
+                              Keep the hint button snug to the right when no status icon is showing.
+                              Only add spacing when the correct/incorrect icon is rendered.
+                            */}
+                            <div
+                                className={`absolute right-3 bottom-3 flex items-center ${feedbackState === 'none' ? '' : 'gap-2'}`}
+                            >
                                 <button
                                     type="button"
                                     onClick={useHint}
-                                    disabled={gameState.hintsRemaining === 0}
+                                    disabled={gameState.hintsRemaining === 0 || isLoadedSolved}
                                     className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700 text-yellow-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                     title="Use Hint"
                                 >
                                     <Lightbulb size={20} className={gameState.hintsRemaining > 0 ? 'fill-yellow-400' : ''} />
                                 </button>
-                                <div className="pointer-events-none w-6 h-6 flex items-center justify-center">
-                                    {feedbackState === 'correct' && <CheckCircle2 className="text-green-500 animate-bounce" />}
-                                    {feedbackState === 'incorrect' && <XCircle className="text-red-500 animate-pulse" />}
-                                </div>
+                                {(feedbackState === 'correct' || feedbackState === 'incorrect') && (
+                                    <div className="pointer-events-none w-6 h-6 flex items-center justify-center">
+                                        {feedbackState === 'correct' && <CheckCircle2 className="text-green-500 animate-bounce" />}
+                                        {feedbackState === 'incorrect' && <XCircle className="text-red-500 animate-pulse" />}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </motion.div>
@@ -166,9 +181,18 @@ const GameControls: React.FC<GameControlsProps> = ({
                 </form>
                 <p className="text-center text-sm text-gray-400 mt-4 space-y-1">
                     {autoAdvanceSeconds !== null && (
-                        <span className="block text-yellow-600 dark:text-yellow-400 font-semibold">
-                            Name detected! Auto-advancing in {autoAdvanceSeconds}s…
-                        </span>
+                        <div className="flex items-center justify-center gap-2">
+                            <span className="block text-yellow-600 dark:text-yellow-400 font-semibold">
+                                Name detected! Auto-advancing in {autoAdvanceSeconds}s…
+                            </span>
+                            <button
+                                type="button"
+                                onClick={onManualAdvance}
+                                className="px-2 py-0.5 text-xs font-bold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 rounded hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors"
+                            >
+                                Next &gt;
+                            </button>
+                        </div>
                     )}
                 </p>
 
@@ -176,7 +200,7 @@ const GameControls: React.FC<GameControlsProps> = ({
                     <button
                         type="button"
                         onClick={handleSkipClick}
-                        disabled={gameState.status !== 'playing'}
+                        disabled={gameState.status !== 'playing' || isLoadedSolved}
                         className="w-full px-4 py-2 rounded-lg border border-red-700 bg-red-600 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         title="Double-click within 3 seconds to skip"
                     >
@@ -186,7 +210,8 @@ const GameControls: React.FC<GameControlsProps> = ({
                     <button
                         type="button"
                         onClick={onShowSolution}
-                        className="w-full px-4 py-2 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-900/20 text-sm font-semibold text-blue-600 dark:text-blue-400 shadow-sm hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors mt-2"
+                        disabled={isLoadedSolved}
+                        className="w-full px-4 py-2 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-900/20 text-sm font-semibold text-blue-600 dark:text-blue-400 shadow-sm hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Show Solution
                     </button>

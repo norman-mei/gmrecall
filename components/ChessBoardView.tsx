@@ -7,17 +7,18 @@ import { ChessOpening } from '../types';
 const FILE_LABELS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 const RANK_LABELS = ['8', '7', '6', '5', '4', '3', '2', '1'];
 
-import { readLocalNumber, persistLocalNumber } from '@/utils/helpers';
-
 interface ChessBoardViewProps {
   opening: ChessOpening;
   isDark: boolean;
   showCoords: boolean;
   animationEnabled: boolean;
   animationDelay: number;
+  soundEnabled: boolean;
   children?: React.ReactNode;
   rightSidebarWidth: number;
   onRightSidebarWidthChange: (width: number) => void;
+  sidebarWidth: number;
+  onSidebarWidthChange: (width: number) => void;
 }
 
 type PieceState = {
@@ -33,18 +34,130 @@ const ChessBoardView: React.FC<ChessBoardViewProps> = ({
   showCoords,
   animationEnabled,
   animationDelay,
+  soundEnabled,
   sidebarWidth,
   onSidebarWidthChange,
   children,
   rightSidebarWidth,
   onRightSidebarWidthChange,
 }) => {
+  const squareFromIndex = (rankIndex: number, fileIndex: number) =>
+    `${FILE_LABELS[fileIndex]}${8 - rankIndex}`;
+
+  const clonePieces = (map: Map<string, PieceState>): PieceState[] =>
+    Array.from(map.values()).map((p) => ({ ...p }));
+
+  const createInitialPieceMap = useCallback((game: Chess) => {
+    const counters: Record<string, number> = {};
+    const map = new Map<string, PieceState>();
+
+    game.board().forEach((rank, rankIndex) => {
+      rank.forEach((square, fileIndex) => {
+        if (!square) return;
+        const key = `${square.color}${square.type}`;
+        counters[key] = (counters[key] || 0) + 1;
+        const id = `${key}-${counters[key]}`;
+        const squareStr = squareFromIndex(rankIndex, fileIndex);
+        map.set(id, {
+          id,
+          color: square.color,
+          type: square.type,
+          square: squareStr,
+        });
+      });
+    });
+
+    return map;
+  }, []);
+
+  const applyMoveToPieceMap = useCallback(
+    (pieceMap: Map<string, PieceState>, move: Move) => {
+      const next = new Map(pieceMap);
+
+      // Remove captured piece if present
+      if (move.captured) {
+        let capturedSquare = move.to;
+        if (move.flags.includes('e')) {
+          const file = move.to[0];
+          const rankNum = Number(move.to[1]);
+          const capRank = move.color === 'w' ? rankNum - 1 : rankNum + 1;
+          capturedSquare = `${file}${capRank}` as any;
+        }
+        for (const [id, piece] of next.entries()) {
+          if (piece.square === capturedSquare) {
+            next.delete(id);
+            break;
+          }
+        }
+      }
+
+      // Move the piece
+      let moverId: string | null = null;
+      for (const [id, piece] of next.entries()) {
+        if (piece.square === move.from && piece.color === move.color) {
+          moverId = id;
+          break;
+        }
+      }
+
+      if (moverId) {
+        const mover = next.get(moverId);
+        if (mover) {
+          next.set(moverId, {
+            ...mover,
+            square: move.to,
+            type: move.promotion ?? mover.type,
+          });
+        }
+      }
+
+      // Handle castling rook movement
+      if (move.flags.includes('k') || move.flags.includes('q')) {
+        const isWhite = move.color === 'w';
+        const isKingSide = move.flags.includes('k');
+        const rookFrom = isWhite
+          ? isKingSide
+            ? 'h1'
+            : 'a1'
+          : isKingSide
+            ? 'h8'
+            : 'a8';
+        const rookTo = isWhite
+          ? isKingSide
+            ? 'f1'
+            : 'd1'
+          : isKingSide
+            ? 'f8'
+            : 'd8';
+
+        for (const [id, piece] of next.entries()) {
+          if (piece.square === rookFrom && piece.type === 'r' && piece.color === move.color) {
+            next.set(id, { ...piece, square: rookTo });
+            break;
+          }
+        }
+      }
+
+      return next;
+    },
+    [],
+  );
+
   const [fen, setFen] = useState(() => new Chess().fen());
-  const [history, setHistory] = useState<string[]>([]);
-  const [pieces, setPieces] = useState<PieceState[]>([]);
+  const [pieces, setPieces] = useState<PieceState[]>(() => {
+    const game = new Chess();
+    const map = createInitialPieceMap(game);
+    return clonePieces(map);
+  });
+  const [activeMoveIndex, setActiveMoveIndex] = useState(-1);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const rightSidebarRef = useRef<HTMLDivElement>(null);
+  const playbackRef = useRef<number | null>(null);
+  const moveAudioRef = useRef<HTMLAudioElement | null>(null);
+  const captureAudioRef = useRef<HTMLAudioElement | null>(null);
+  const castleAudioRef = useRef<HTMLAudioElement | null>(null);
+  const checkAudioRef = useRef<HTMLAudioElement | null>(null);
   const boardSize = 'clamp(320px, 70vw, 640px)';
   const lightCoordColor = '#FFCE9E';
   const darkCoordColor = '#D18B47';
@@ -52,26 +165,6 @@ const ChessBoardView: React.FC<ChessBoardViewProps> = ({
   const rankColor = (rank: string) => (['2', '4', '6', '8'].includes(rank) ? lightCoordColor : darkCoordColor);
   const lightSquare = '/images/lightsquare.svg';
   const darkSquare = '/images/darksquare.svg';
-
-  const squareFromIndex = (rankIndex: number, fileIndex: number) =>
-    `${FILE_LABELS[fileIndex]}${8 - rankIndex}`;
-
-  const buildPieceState = useCallback((game: Chess): PieceState[] => {
-    const board = game.board();
-    const list: PieceState[] = [];
-    board.forEach((rank, rankIndex) => {
-      rank.forEach((square, fileIndex) => {
-        if (!square) return;
-        list.push({
-          id: `${square.color}${square.type}-${squareFromIndex(rankIndex, fileIndex)}`,
-          color: square.color,
-          type: square.type,
-          square: squareFromIndex(rankIndex, fileIndex),
-        });
-      });
-    });
-    return list;
-  }, []);
 
   const positionForSquare = (sq: string) => {
     const file = sq[0];
@@ -102,86 +195,164 @@ const ChessBoardView: React.FC<ChessBoardViewProps> = ({
     [],
   );
 
-  // Auto-scroll to bottom of move list
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [history]);
+  const moveList = useMemo(
+    () => opening.moves.split(/\s+/).filter((m) => m.trim().length > 0),
+    [opening.moves],
+  );
 
-  useEffect(() => {
+  const moveStates = useMemo(() => {
     const game = new Chess();
-    setFen(game.fen());
-    setHistory([]);
-    setPieces(buildPieceState(game));
+    let pieceMap = createInitialPieceMap(game);
+    const states: { fen: string; pieces: PieceState[] }[] = [
+      { fen: game.fen(), pieces: clonePieces(pieceMap) },
+    ];
 
-    const moves = opening.moves.split(/\s+/).filter((m) => m.trim().length > 0);
-
-    const delay = animationDelay;
-
-    let cancelled = false;
-    let timeoutId: number | undefined;
-
-    const playMove = (index: number) => {
-      if (cancelled || index >= moves.length) return;
+    moveList.forEach((moveStr) => {
       try {
-        const moveStr = moves[index];
         const result = game.move(moveStr) as Move | null;
-        if (!result) {
-          console.warn(`Illegal move: ${moveStr}`);
-          return;
+        if (result) {
+          pieceMap = applyMoveToPieceMap(pieceMap, result);
+          states.push({ fen: game.fen(), pieces: clonePieces(pieceMap) });
         }
-
-        setPieces((prev) => {
-          let next = [...prev];
-
-          // Remove captured piece if any
-          if (result.captured) {
-            let capturedSquare = result.to;
-            if (result.flags.includes('e')) {
-              const file = result.to[0];
-              const rankNum = Number(result.to[1]);
-              const capRank = result.color === 'w' ? rankNum - 1 : rankNum + 1;
-              capturedSquare = `${file}${capRank}` as any; // Cast to any or Square if imported, but any is safer for now to avoid import issues
-            }
-            next = next.filter((p) => p.square !== capturedSquare);
-          }
-
-          // Move the piece
-          const moverIndex = next.findIndex((p) => p.square === result.from && p.color === result.color);
-          if (moverIndex >= 0) {
-            const mover = next[moverIndex];
-            next[moverIndex] = {
-              ...mover,
-              square: result.to,
-              type: result.promotion ?? mover.type,
-            };
-          } else {
-            // Fallback to rebuilding from game state if mismatch
-            return buildPieceState(game);
-          }
-
-          return next;
-        });
-
-        setFen(game.fen());
-        setHistory([...game.history()]);
       } catch (error) {
-        console.error('Chess logic error:', error);
-        return;
+        console.warn('Chess logic error:', error);
       }
-      timeoutId = window.setTimeout(() => playMove(index + 1), delay);
-    };
+    });
 
-    timeoutId = window.setTimeout(() => playMove(0), delay);
+    return states;
+  }, [applyMoveToPieceMap, createInitialPieceMap, moveList]);
+
+  const moveMeta = useMemo(() => {
+    const game = new Chess();
+    const getInCheck = () => {
+      if (typeof game.inCheck === 'function') return game.inCheck();
+      // Fallback for older chess.js versions
+      // @ts-expect-error legacy method name
+      if (typeof game.in_check === 'function') return game.in_check();
+      return false;
+    };
+    return moveList.map((moveStr) => {
+      const result = game.move(moveStr) as Move | null;
+      return {
+        isCapture: !!result?.captured,
+        isCastle: result ? result.flags.includes('k') || result.flags.includes('q') : false,
+        isCheck: result ? getInCheck() : false,
+      };
+    });
+  }, [moveList]);
+
+  useEffect(() => {
+    const targetIndex = Math.min(
+      moveStates.length - 1,
+      Math.max(0, activeMoveIndex + 1),
+    );
+    const targetState = moveStates[targetIndex];
+    setFen(targetState.fen);
+    setPieces(targetState.pieces);
+  }, [activeMoveIndex, moveStates]);
+
+  const stopAutoPlayback = useCallback(() => {
+    if (playbackRef.current !== null) {
+      clearInterval(playbackRef.current);
+      playbackRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    setActiveMoveIndex(-1);
+    stopAutoPlayback();
+
+    if (!animationEnabled || moveList.length === 0) {
+      setActiveMoveIndex(moveList.length - 1);
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setActiveMoveIndex((prev) => {
+        const next = prev + 1;
+        if (next >= moveList.length) {
+          stopAutoPlayback();
+          return prev;
+        }
+        return next;
+      });
+    }, animationDelay);
+
+    playbackRef.current = intervalId;
 
     return () => {
-      cancelled = true;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
+      stopAutoPlayback();
     };
-  }, [opening, animationDelay, buildPieceState]);
+  }, [animationDelay, animationEnabled, moveList.length, opening, stopAutoPlayback]);
+
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    const activeEl = scrollRef.current.querySelector('[data-active-move=\"true\"]') as HTMLElement | null;
+    if (!activeEl) return;
+    const container = scrollRef.current;
+    const elTop = activeEl.offsetTop;
+    const elBottom = elTop + activeEl.offsetHeight;
+    if (elTop < container.scrollTop) {
+      container.scrollTop = elTop - 8;
+    } else if (elBottom > container.scrollTop + container.clientHeight) {
+      container.scrollTop = elBottom - container.clientHeight + 8;
+    }
+  }, [activeMoveIndex, moveList.length]);
+
+  const handleStep = useCallback(
+    (direction: -1 | 1) => {
+      stopAutoPlayback();
+      setActiveMoveIndex((prev) => {
+        const next = prev + direction;
+        return Math.max(-1, Math.min(moveList.length - 1, next));
+      });
+    },
+    [moveList.length, stopAutoPlayback],
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    moveAudioRef.current = new Audio('/sounds/move.mp3');
+    captureAudioRef.current = new Audio('/sounds/capture.mp3');
+    castleAudioRef.current = new Audio('/sounds/castle.mp3');
+    checkAudioRef.current = new Audio('/sounds/check.mp3');
+    return () => {
+      moveAudioRef.current = null;
+      captureAudioRef.current = null;
+      castleAudioRef.current = null;
+      checkAudioRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!soundEnabled || activeMoveIndex < 0) return;
+    const meta = moveMeta[activeMoveIndex];
+    const audio = meta?.isCastle
+      ? castleAudioRef.current
+      : meta?.isCheck
+        ? checkAudioRef.current
+        : meta?.isCapture
+          ? captureAudioRef.current
+          : moveAudioRef.current;
+    if (!audio) return;
+    audio.currentTime = 0;
+    audio.play().catch(() => null);
+  }, [activeMoveIndex, moveMeta, soundEnabled]);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+      e.preventDefault();
+      handleStep(e.key === 'ArrowLeft' ? -1 : 1);
+    };
+
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [handleStep]);
 
   const boardData = useMemo(() => {
     const chess = new Chess();
@@ -315,20 +486,67 @@ const ChessBoardView: React.FC<ChessBoardViewProps> = ({
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 custom-scrollbar no-scrollbar relative bg-gray-50 dark:bg-zinc-900/50">
           <table className="w-full text-sm border-collapse">
             <tbody>
-              {Array.from({ length: Math.ceil(history.length / 2) }).map((_, i) => (
-                <tr key={i} className="border-b border-gray-100 dark:border-zinc-700/30 last:border-0 hover:bg-gray-100 dark:hover:bg-zinc-800/50 transition-colors">
-                  <td className="py-1.5 px-2 text-gray-400 font-mono text-xs w-8 select-none">{i + 1}.</td>
-                  <td className="py-1.5 px-2 font-medium text-gray-800 dark:text-gray-200">{history[i * 2]}</td>
-                  <td className="py-1.5 px-2 font-medium text-gray-800 dark:text-gray-200">{history[i * 2 + 1] || ''}</td>
-                </tr>
-              ))}
+              {Array.from({ length: Math.ceil(moveList.length / 2) }).map((_, i) => {
+                const whiteIndex = i * 2;
+                const blackIndex = i * 2 + 1;
+                const whiteMove = moveList[whiteIndex];
+                const blackMove = moveList[blackIndex];
+                const whiteActive = activeMoveIndex === whiteIndex;
+                const blackActive = activeMoveIndex === blackIndex;
+
+                const baseTd = 'py-1.5 px-2 font-medium text-gray-800 dark:text-gray-200 rounded-md transition-colors';
+                const activeClass = 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300';
+
+                return (
+                  <tr key={i} className="border-b border-gray-100 dark:border-zinc-700/30 last:border-0 hover:bg-gray-100 dark:hover:bg-zinc-800/50 transition-colors">
+                    <td className="py-1.5 px-2 text-gray-400 font-mono text-xs w-8 select-none">{i + 1}.</td>
+                    <td
+                      data-active-move={whiteActive ? 'true' : undefined}
+                      className={`${baseTd} ${whiteActive ? activeClass : ''}`}
+                    >
+                      {whiteMove || ''}
+                    </td>
+                    <td
+                      data-active-move={blackActive ? 'true' : undefined}
+                      className={`${baseTd} ${blackActive ? activeClass : ''}`}
+                    >
+                      {blackMove || ''}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
-          {history.length === 0 && (
+          {moveList.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs italic">
               Waiting for start...
             </div>
           )}
+        </div>
+        <div className="p-3 border-t border-gray-200 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-800/60 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => handleStep(-1)}
+            disabled={activeMoveIndex <= -1}
+            className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            &lt; Prev
+          </button>
+          <div className="flex-1 text-center text-xs text-gray-500 dark:text-gray-400">
+            {moveList.length === 0
+              ? 'No moves'
+              : activeMoveIndex >= 0
+                ? `Move ${activeMoveIndex + 1} / ${moveList.length}`
+                : 'Start position'}
+          </div>
+          <button
+            type="button"
+            onClick={() => handleStep(1)}
+            disabled={activeMoveIndex >= moveList.length - 1}
+            className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Next &gt;
+          </button>
         </div>
       </div>
 

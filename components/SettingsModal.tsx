@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { X, Moon, Sun, Map, Volume2, VolumeX, Zap, BarChart3, Settings as SettingsIcon } from 'lucide-react';
-import { GameSettings, PlayerStats, Difficulty } from '../types';
+import { GameSettings, PlayerStats, Difficulty, GameRecord } from '../types';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -11,6 +11,16 @@ interface SettingsModalProps {
   settings: GameSettings;
   updateSettings: (key: keyof GameSettings, value: any) => void;
   stats: PlayerStats;
+  currentStreak: number;
+  averageScore: number;
+  averageGuessesPerGame: number;
+  wrongGuesses: number;
+  recentGames: GameRecord[];
+  sessionStats: {
+    openingsSeen: number;
+    hintsUsed: number;
+    livesLost: number;
+  };
 
   animationDelay: number;
   onAnimationDelayChange: (delay: number) => void;
@@ -25,6 +35,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
   updateSettings,
   stats,
+  currentStreak,
+  averageScore,
+  averageGuessesPerGame,
+  wrongGuesses,
+  recentGames,
+  sessionStats,
   animationDelay,
   onAnimationDelayChange,
   onResetLayout,
@@ -34,8 +50,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   if (!isOpen) return null;
 
   const calculateAccuracy = () => {
-    if (stats.totalGuesses === 0) return 0;
-    return Math.round((stats.correctGuesses / stats.totalGuesses) * 100);
+    if (stats.totalGuesses === 0) return '0.00';
+    const percent = (stats.correctGuesses / stats.totalGuesses) * 100;
+    return Math.min(100, percent).toFixed(2);
   };
 
   const formatDate = (ts: number) => {
@@ -43,11 +60,42 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const difficultyColors: Record<Difficulty, string> = {
-    Easy: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400',
-    Medium: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400',
-    Hard: 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400',
-    'Very Hard': 'text-indigo-600 bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300',
+    Easy: 'text-green-700 bg-green-100 dark:bg-green-900/40 dark:text-green-300',
+    Medium: 'text-yellow-700 bg-yellow-100 dark:bg-yellow-900/40 dark:text-yellow-300',
+    Hard: 'text-orange-700 bg-orange-100 dark:bg-orange-900/40 dark:text-orange-300',
+    'Very Hard': 'text-red-700 bg-red-100 dark:bg-red-900/40 dark:text-red-300',
   };
+
+  const difficultyButtonStyles: Record<Difficulty, { active: string; inactive: string }> = {
+    Easy: {
+      active: 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+      inactive: 'border-green-200 dark:border-green-900/40 text-green-700 dark:text-green-300 hover:border-green-300',
+    },
+    Medium: {
+      active: 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
+      inactive: 'border-yellow-200 dark:border-yellow-900/40 text-yellow-700 dark:text-yellow-300 hover:border-yellow-300',
+    },
+    Hard: {
+      active: 'border-orange-500 bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+      inactive: 'border-orange-200 dark:border-orange-900/40 text-orange-700 dark:text-orange-300 hover:border-orange-300',
+    },
+    'Very Hard': {
+      active: 'border-red-500 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+      inactive: 'border-red-200 dark:border-red-900/40 text-red-700 dark:text-red-300 hover:border-red-300',
+    },
+  };
+
+  const statCards = [
+    { label: 'Games Played', value: stats.gamesPlayed, accent: 'text-gray-800 dark:text-white' },
+    { label: 'Best Score', value: stats.bestScore, accent: 'text-blue-600 dark:text-blue-400' },
+    { label: 'Current Streak', value: currentStreak, accent: 'text-amber-600 dark:text-amber-400' },
+    { label: 'Accuracy', value: `${calculateAccuracy()}%`, accent: 'text-green-600 dark:text-green-400' },
+    { label: 'Avg Score', value: averageScore.toFixed(1), accent: 'text-indigo-600 dark:text-indigo-400' },
+    { label: 'Avg Guesses/Game', value: averageGuessesPerGame.toFixed(1), accent: 'text-teal-600 dark:text-teal-400' },
+    { label: 'Correct Answers', value: stats.correctGuesses, accent: 'text-purple-600 dark:text-purple-400' },
+    { label: 'Wrong Guesses', value: wrongGuesses, accent: 'text-rose-600 dark:text-rose-400' },
+    { label: 'Total Guesses', value: stats.totalGuesses, accent: 'text-orange-600 dark:text-orange-400' },
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -97,9 +145,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     <button
                       key={diff}
                       onClick={() => updateSettings('difficulty', diff)}
-                      className={`p-3 rounded-xl border-2 text-center transition-all ${settings.difficulty === diff
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold'
-                        : 'border-gray-200 dark:border-zinc-600 text-gray-600 dark:text-gray-400 hover:border-blue-300'
+                      className={`p-3 rounded-xl border-2 text-center transition-all font-semibold ${settings.difficulty === diff
+                        ? `${difficultyButtonStyles[diff].active} shadow-sm`
+                        : `${difficultyButtonStyles[diff].inactive} bg-white dark:bg-zinc-800`
                         }`}
                     >
                       {diff}
@@ -234,23 +282,64 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* STATS TAB */}
           {activeTab === 'stats' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 dark:bg-zinc-700/50 p-4 rounded-xl border border-gray-100 dark:border-zinc-600 text-center">
-                  <p className="text-xs text-gray-500 uppercase font-bold">Games Played</p>
-                  <p className="text-2xl font-black text-gray-800 dark:text-white">{stats.gamesPlayed}</p>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {statCards.map((card) => (
+                  <div key={card.label} className="bg-gray-50 dark:bg-zinc-700/50 p-4 rounded-xl border border-gray-100 dark:border-zinc-600 text-center">
+                    <p className="text-xs text-gray-500 uppercase font-bold">{card.label}</p>
+                    <p className={`text-2xl font-black ${card.accent}`}>{card.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gray-50 dark:bg-zinc-700/40 p-4 rounded-xl border border-gray-100 dark:border-zinc-600">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Session Totals</h4>
+                    <span className="text-[10px] uppercase tracking-widest text-blue-600 dark:text-blue-400 font-bold">Live</span>
+                  </div>
+                  <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                    <div className="flex items-center justify-between">
+                      <span>Openings seen</span>
+                      <span className="font-semibold">{sessionStats.openingsSeen}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Hints used</span>
+                      <span className="font-semibold text-amber-600 dark:text-amber-400">{sessionStats.hintsUsed}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Lives lost</span>
+                      <span className="font-semibold text-red-600 dark:text-red-400">{sessionStats.livesLost}</span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-3">Includes the current round and in-progress opening.</p>
                 </div>
-                <div className="bg-gray-50 dark:bg-zinc-700/50 p-4 rounded-xl border border-gray-100 dark:border-zinc-600 text-center">
-                  <p className="text-xs text-gray-500 uppercase font-bold">Best Score</p>
-                  <p className="text-2xl font-black text-blue-600 dark:text-blue-400">{stats.bestScore}</p>
-                </div>
-                <div className="bg-gray-50 dark:bg-zinc-700/50 p-4 rounded-xl border border-gray-100 dark:border-zinc-600 text-center">
-                  <p className="text-xs text-gray-500 uppercase font-bold">Accuracy</p>
-                  <p className="text-2xl font-black text-green-600 dark:text-green-400">{calculateAccuracy()}%</p>
-                </div>
-                <div className="bg-gray-50 dark:bg-zinc-700/50 p-4 rounded-xl border border-gray-100 dark:border-zinc-600 text-center">
-                  <p className="text-xs text-gray-500 uppercase font-bold">Correct Answers</p>
-                  <p className="text-2xl font-black text-purple-600 dark:text-purple-400">{stats.correctGuesses}</p>
+
+                <div className="bg-gray-50 dark:bg-zinc-700/40 p-4 rounded-xl border border-gray-100 dark:border-zinc-600">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Recent Games</h4>
+                    <span className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-gray-400 font-semibold">Last 3</span>
+                  </div>
+                  {recentGames.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Play a game to start building your history.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {recentGames.map((game) => (
+                        <div key={game.id} className="p-3 rounded-lg bg-white dark:bg-zinc-800/60 border border-gray-100 dark:border-zinc-700">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${difficultyColors[game.difficulty]}`}>
+                              {game.difficulty}
+                            </span>
+                            <span className="text-[11px] text-gray-500 dark:text-gray-400">{formatDate(game.timestamp)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm text-gray-700 dark:text-gray-200">
+                            <span className="font-semibold">Score: {game.score}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{game.openingsSolved.length} openings</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
