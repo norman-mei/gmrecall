@@ -1,3 +1,14 @@
 {
-  "/page": "app/page.js"
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/auth/change-email/route": "app/api/auth/change-email/route.js",
+  "/api/auth/change-username/route": "app/api/auth/change-username/route.js",
+  "/api/auth/change-password/route": "app/api/auth/change-password/route.js",
+  "/api/auth/login/route": "app/api/auth/login/route.js",
+  "/api/auth/logout/route": "app/api/auth/logout/route.js",
+  "/api/auth/register/route": "app/api/auth/register/route.js",
+  "/api/auth/resend-verification/route": "app/api/auth/resend-verification/route.js",
+  "/api/auth/session/route": "app/api/auth/session/route.js",
+  "/page": "app/page.js",
+  "/api/auth/verify-email/route": "app/api/auth/verify-email/route.js",
+  "/account/page": "app/account/page.js"
 }

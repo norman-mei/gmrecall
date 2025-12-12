@@ -6,8 +6,9 @@ import { GameSettings, PlayerStats, Difficulty, GameRecord } from '../types';
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  isDarkMode: boolean;
-  toggleDarkMode: () => void;
+  themeMode: 'light' | 'dark' | 'system';
+  resolvedIsDark: boolean;
+  onThemeModeChange: (mode: 'light' | 'dark' | 'system') => void;
   settings: GameSettings;
   updateSettings: (key: keyof GameSettings, value: any) => void;
   stats: PlayerStats;
@@ -30,8 +31,9 @@ interface SettingsModalProps {
 const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
-  isDarkMode,
-  toggleDarkMode,
+  themeMode,
+  resolvedIsDark,
+  onThemeModeChange,
   settings,
   updateSettings,
   stats,
@@ -64,9 +66,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     Medium: 'text-yellow-700 bg-yellow-100 dark:bg-yellow-900/40 dark:text-yellow-300',
     Hard: 'text-orange-700 bg-orange-100 dark:bg-orange-900/40 dark:text-orange-300',
     'Very Hard': 'text-red-700 bg-red-100 dark:bg-red-900/40 dark:text-red-300',
+    Adaptive: 'text-teal-700 bg-teal-100 dark:bg-teal-900/40 dark:text-teal-300',
   };
 
   const difficultyButtonStyles: Record<Difficulty, { active: string; inactive: string }> = {
+    Adaptive: {
+      active: 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300',
+      inactive: 'border-teal-200 dark:border-teal-900/40 text-teal-700 dark:text-teal-300 hover:border-teal-300',
+    },
     Easy: {
       active: 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
       inactive: 'border-green-200 dark:border-green-900/40 text-green-700 dark:text-green-300 hover:border-green-300',
@@ -106,7 +113,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-lg bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl transform transition-all scale-100 border border-gray-200 dark:border-zinc-700 overflow-hidden max-h-[85vh] flex flex-col">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl transform transition-all scale-100 border border-gray-200 dark:border-zinc-700 overflow-hidden max-h-[85vh] flex flex-col">
 
         {/* Header with Tabs */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-zinc-700">
@@ -146,12 +153,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             <>
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Difficulty</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {(['Easy', 'Medium', 'Hard', 'Very Hard'] as Difficulty[]).map((diff) => (
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {(['Adaptive', 'Easy', 'Medium', 'Hard', 'Very Hard'] as Difficulty[]).map((diff) => (
                     <button
                       key={diff}
                       onClick={() => updateSettings('difficulty', diff)}
-                      className={`p-3 rounded-xl border-2 text-center transition-all font-semibold ${settings.difficulty === diff
+                      className={`p-3 rounded-xl border-2 text-center transition-all font-semibold whitespace-nowrap ${settings.difficulty === diff
                         ? `${difficultyButtonStyles[diff].active} shadow-sm`
                         : `${difficultyButtonStyles[diff].inactive} bg-white dark:bg-zinc-800`
                         }`}
@@ -161,6 +168,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   ))}
                 </div>
                 <p className="text-xs text-gray-500 mt-2 text-center">
+                  {settings.difficulty === 'Adaptive' && "Starts balanced and adjusts harder or easier as you perform."}
                   {settings.difficulty === 'Easy' && "Common openings, slower playback."}
                   {settings.difficulty === 'Medium' && "More variety, normal speed."}
                   {settings.difficulty === 'Hard' && "Advanced set, fast playback."}
@@ -173,22 +181,36 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Appearance</h3>
 
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
-                      {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-gray-100">Theme Mode</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{isDarkMode ? 'Dark' : 'Light'}</p>
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                        {resolvedIsDark ? <Moon size={20} /> : <Sun size={20} />}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">Theme Mode</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                          {themeMode === 'system' ? 'System default' : themeMode}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <button
-                    onClick={toggleDarkMode}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isDarkMode ? 'bg-blue-600' : 'bg-gray-300'}`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isDarkMode ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['system', 'light', 'dark'] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        onClick={() => onThemeModeChange(mode)}
+                        className={`px-3 py-2 rounded-lg text-sm font-semibold border-2 transition-all whitespace-nowrap ${
+                          themeMode === mode
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 shadow-sm'
+                            : 'border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-gray-200 hover:border-blue-300 dark:hover:border-blue-500'
+                        }`}
+                        aria-pressed={themeMode === mode}
+                      >
+                        {mode === 'system' ? 'System' : mode === 'light' ? 'Light' : 'Dark'}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -270,6 +292,32 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
                     <span>Faster</span>
                     <span>Slower</span>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">Sound Volume</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {Math.round(settings.soundVolume * 100)}%
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={Math.round(settings.soundVolume * 100)}
+                    onChange={(e) => updateSettings('soundVolume', Number(e.target.value) / 100)}
+                    className="w-full accent-purple-600 mt-3"
+                    aria-label="Sound volume"
+                    disabled={!settings.soundEnabled}
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <span>Quieter</span>
+                    <span>Louder</span>
                   </div>
                 </div>
 

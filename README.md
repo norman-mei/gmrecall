@@ -6,6 +6,7 @@
 
 - **Interactive Gameplay**: Watch animated move sequences and type your guess.
 - **Multiple Difficulties**:
+  - **Adaptive (default)**: Dynamically adjusts to you—solve more to see harder lines, struggle and it eases up.
   - **Easy**: Common openings (e.g., Ruy Lopez, Sicilian Defense).
   - **Medium**: Intermediate variations.
   - **Hard**: Complex and less common lines.
@@ -103,7 +104,7 @@ To add new openings, edit `data/openings.ts`. Add a new entry to the `openings` 
 
 ### Adjusting Difficulty
 
-Difficulty levels are defined in `types.ts` and used in `utils/gameLogic.ts`. You can modify the criteria for each difficulty level or add new ones.
+Difficulty levels are defined in `types.ts` and used in `utils/gameLogic.ts`. The default **Adaptive** mode biases toward harder or easier openings based on your recent accuracy and streak; other fixed tiers pull from predefined pools. You can tweak the adaptive weighting or add new tiers in those files.
 
 ## License
 

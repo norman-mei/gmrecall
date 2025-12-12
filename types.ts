@@ -1,5 +1,5 @@
 
-export type Difficulty = 'Easy' | 'Medium' | 'Hard' | 'Very Hard';
+export type Difficulty = 'Easy' | 'Medium' | 'Hard' | 'Very Hard' | 'Adaptive';
 
 export interface ChessOpening {
   name: string;
@@ -15,8 +15,10 @@ export interface GameSettings {
   showCoordinates: boolean;
   allowMistakes: boolean;
   soundEnabled: boolean;
+  soundVolume: number; // 0-1
   difficulty: Difficulty;
   animationEnabled: boolean;
+  themeMode: 'light' | 'dark' | 'system';
 }
 
 export interface GameRecord {

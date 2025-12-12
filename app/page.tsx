@@ -1,14 +1,17 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Heart, Lightbulb, RefreshCw, Settings, Trophy, XCircle, Trash2 } from 'lucide-react';
+import { Heart, Lightbulb, RefreshCw, Settings, Trophy, XCircle, Trash2, Book, User } from 'lucide-react';
 import { History } from 'lucide-react';
+import { Chess } from 'chess.js';
 
 import SettingsModal from '@/components/SettingsModal';
 import PasswordModal from '@/components/PasswordModal';
+import OpeningsModal from '@/components/OpeningsModal';
 import { checkGuess, getRandomOpening, normalizeString } from '@/utils/gameLogic';
 import { readLocalNumber, persistLocalNumber } from '@/utils/helpers';
 import { GameRecord, GameSettings, GameState, PlayerStats, Difficulty } from '@/types';
@@ -33,8 +36,10 @@ const DEFAULT_SETTINGS: GameSettings = {
   showCoordinates: true,
   allowMistakes: true,
   soundEnabled: true,
+  soundVolume: 0.7,
   animationEnabled: true,
-  difficulty: 'Medium',
+  difficulty: 'Adaptive',
+  themeMode: 'system',
 };
 
 const DEFAULT_STATS: PlayerStats = {
@@ -64,9 +69,11 @@ const persistLocalStorage = (key: string, value: unknown) => {
 };
 
 export default function Page() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [systemPrefersDark, setSystemPrefersDark] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isOpeningsOpen, setIsOpeningsOpen] = useState(false);
+  // openingsSearch/Sort moved to OpeningsModal component for performance
   const [inputStr, setInputStr] = useState('');
   const [historySearch, setHistorySearch] = useState('');
   const [historySort, setHistorySort] = useState('recent');
@@ -135,12 +142,21 @@ export default function Page() {
   }, [animationDelay]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    setSystemPrefersDark(media.matches);
+    const handler = (event: MediaQueryListEvent) => setSystemPrefersDark(event.matches);
+    media.addEventListener('change', handler);
+    return () => media.removeEventListener('change', handler);
+  }, []);
+
+  const isDarkMode =
+    settings.themeMode === 'dark' ||
+    (settings.themeMode === 'system' && systemPrefersDark);
+
+  useEffect(() => {
     if (typeof document === 'undefined') return;
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', isDarkMode);
   }, [isDarkMode]);
 
   // Auto-start the game on initial load
@@ -153,7 +169,7 @@ export default function Page() {
 
   const startGame = () => {
     clearAutoAdvance();
-    const firstOpening = getRandomOpening([], settings.difficulty);
+    const firstOpening = getRandomOpening([], settings.difficulty, buildAdaptiveContext());
     setGameState({
       status: 'playing',
       currentOpening: firstOpening,
@@ -242,7 +258,7 @@ export default function Page() {
       setOpeningStats({ livesLost: 0, hintsUsed: 0 });
       setGameState((prev) => {
         const newHistory = [...prev.history, prev.currentOpening!.name];
-        const nextOpening = getRandomOpening(newHistory, settings.difficulty);
+        const nextOpening = getRandomOpening(newHistory, settings.difficulty, buildAdaptiveContext());
         return {
           ...prev,
           score: prev.score + 1,
@@ -322,12 +338,16 @@ export default function Page() {
     }
   }, [gameState.status, gameState.score]);
 
-  const skipOpening = () => {
+  const skipOpening = (difficultyOverride?: Difficulty) => {
     clearAutoAdvance();
     setGameState((prev) => {
       if (prev.status !== 'playing' || !prev.currentOpening) return prev;
       const used = [...prev.history, prev.currentOpening.name];
-      const nextOpening = getRandomOpening(used, settings.difficulty);
+      const nextOpening = getRandomOpening(
+        used,
+        difficultyOverride ?? settings.difficulty,
+        buildAdaptiveContext(),
+      );
       setSessionHistory((hist) => [
         ...hist,
         {
@@ -426,6 +446,50 @@ export default function Page() {
     }
   };
 
+  const buildAdaptiveContext = () => {
+    const totalGuesses = stats.totalGuesses;
+    const lifetimeAccuracy = totalGuesses === 0 ? 0.6 : stats.correctGuesses / totalGuesses;
+
+    const recent = sessionHistory.slice(-10);
+    const recentSolved = recent.filter((r) => r.outcome === 'solved').length;
+    const recentSkipped = recent.filter((r) => r.outcome === 'skipped').length;
+    const recentAttempts = recent.length + recentSkipped * 0.5; // count skips as half-weighted attempts
+    const recentAccuracy =
+      recentAttempts === 0 ? lifetimeAccuracy : (recentSolved + recentSkipped * 0.25) / recentAttempts;
+
+    let solvedStreak = 0;
+    for (let i = sessionHistory.length - 1; i >= 0; i--) {
+      if (sessionHistory[i].outcome === 'solved') {
+        solvedStreak++;
+      } else {
+        break;
+      }
+    }
+
+    return {
+      accuracy: lifetimeAccuracy,
+      recentAccuracy,
+      streak: solvedStreak,
+    };
+  };
+
+
+
+  const handleUpdateSettings = (key: keyof GameSettings, value: any) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
+
+    if (
+      key === 'difficulty' &&
+      value !== settings.difficulty &&
+      inputStr.length === 0 &&
+      gameState.status === 'playing' &&
+      gameState.currentOpening
+    ) {
+      // Instantly move to a new opening at the selected difficulty when no guess has been started.
+      skipOpening(value as Difficulty);
+    }
+  };
+
   const [isLoadedSolved, setIsLoadedSolved] = useState(false);
 
   const loadOpening = (openingName: string, moves: string, outcome: string) => {
@@ -501,6 +565,7 @@ export default function Page() {
     Medium: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400',
     Hard: 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400',
     'Very Hard': 'text-indigo-600 bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300',
+    Adaptive: 'text-teal-700 bg-teal-100 dark:bg-teal-900/30 dark:text-teal-300',
   };
 
   const formatDate = (ts: number) => {
@@ -646,16 +711,29 @@ export default function Page() {
     };
   }, [sessionHistory, openingStats, gameState.status]);
 
+  const solvedOpeningsSet = useMemo(() => {
+    const set = new Set<string>();
+    gameHistory.forEach((game) => game.openingsSolved.forEach((name) => set.add(name)));
+    sessionHistory.forEach((entry) => {
+      if (entry.outcome === 'solved') set.add(entry.name);
+    });
+    gameState.history.forEach((name) => set.add(name));
+    return set;
+  }, [gameHistory, sessionHistory, gameState.history]);
+
+
+
 
   return (
     <div className="min-h-screen w-full bg-gray-50 dark:bg-zinc-900 text-gray-800 dark:text-gray-100 transition-colors duration-500 font-sans flex flex-col overflow-hidden">
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        isDarkMode={isDarkMode}
-        toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+        themeMode={settings.themeMode}
+        resolvedIsDark={isDarkMode}
+        onThemeModeChange={(mode) => handleUpdateSettings('themeMode', mode)}
         settings={settings}
-        updateSettings={(k, v) => setSettings((prev) => ({ ...prev, [k]: v }))}
+        updateSettings={handleUpdateSettings}
         stats={stats}
         currentStreak={gameState.score}
         averageScore={averageScore}
@@ -676,6 +754,26 @@ export default function Page() {
 
       <header className="absolute top-0 w-full p-6 flex justify-end items-start z-40 pointer-events-none">
         <div className="pointer-events-auto relative flex items-center justify-end gap-3">
+          <button
+            onClick={() => setIsOpeningsOpen(true)}
+            className="group flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-out hover:pr-6 hover:ring-4 ring-blue-500/20"
+            title="Openings"
+          >
+            <Book className="w-6 h-6 text-gray-700 dark:text-gray-200 transition-transform duration-500 group-hover:-rotate-6" />
+            <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-bold text-gray-700 dark:text-gray-200 opacity-0 group-hover:max-w-[120px] group-hover:opacity-100 transition-all duration-500 ease-in-out">
+              Openings
+            </span>
+          </button>
+          <Link
+            href="/account"
+            className="group flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-out hover:pr-6 hover:ring-4 ring-blue-500/20"
+            title="Account"
+          >
+            <User className="w-6 h-6 text-gray-700 dark:text-gray-200 transition-transform duration-500 group-hover:scale-110" />
+            <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-bold text-gray-700 dark:text-gray-200 opacity-0 group-hover:max-w-[120px] group-hover:opacity-100 transition-all duration-500 ease-in-out">
+              Account
+            </span>
+          </Link>
           <button
             onClick={() => setIsHistoryOpen(true)}
             className="group flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-out hover:pr-6 hover:ring-4 ring-blue-500/20"
@@ -719,6 +817,7 @@ export default function Page() {
                   animationEnabled={settings.animationEnabled}
                   animationDelay={animationDelay}
                   soundEnabled={settings.soundEnabled}
+                  soundVolume={settings.soundVolume}
                   sidebarWidth={movesSidebarWidth}
                   onSidebarWidthChange={setMovesSidebarWidth}
                   rightSidebarWidth={rightSidebarWidth}
@@ -732,16 +831,16 @@ export default function Page() {
                     useHint={useHint}
                     feedbackState={feedbackState}
                     autoAdvanceSeconds={autoAdvanceSeconds}
-                  handleSkipClick={handleSkipClick}
-                  onShowSolution={handleShowSolution}
-                  INITIAL_LIVES={INITIAL_LIVES}
-                  MAX_HINTS={MAX_HINTS}
-                  isLoadedSolved={isLoadedSolved}
-                  isSolutionRevealed={isSolutionRevealed}
-                  onManualAdvance={handleManualAdvance}
-                />
-              </ChessBoardView>
-            </div>
+                    handleSkipClick={handleSkipClick}
+                    onShowSolution={handleShowSolution}
+                    INITIAL_LIVES={INITIAL_LIVES}
+                    MAX_HINTS={MAX_HINTS}
+                    isLoadedSolved={isLoadedSolved}
+                    isSolutionRevealed={isSolutionRevealed}
+                    onManualAdvance={handleManualAdvance}
+                  />
+                </ChessBoardView>
+              </div>
             </motion.div>
           )}
 
@@ -796,6 +895,12 @@ export default function Page() {
             <p>Loading next opening...</p>
           </div>
         )}
+
+        <OpeningsModal
+          isOpen={isOpeningsOpen}
+          onClose={() => setIsOpeningsOpen(false)}
+          solvedOpenings={solvedOpeningsSet}
+        />
 
         {isHistoryOpen && (
           <div

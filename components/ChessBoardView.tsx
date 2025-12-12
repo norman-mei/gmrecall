@@ -14,6 +14,7 @@ interface ChessBoardViewProps {
   animationEnabled: boolean;
   animationDelay: number;
   soundEnabled: boolean;
+  soundVolume: number;
   children?: React.ReactNode;
   rightSidebarWidth: number;
   onRightSidebarWidthChange: (width: number) => void;
@@ -35,6 +36,7 @@ const ChessBoardView: React.FC<ChessBoardViewProps> = ({
   animationEnabled,
   animationDelay,
   soundEnabled,
+  soundVolume,
   sidebarWidth,
   onSidebarWidthChange,
   children,
@@ -316,13 +318,16 @@ const ChessBoardView: React.FC<ChessBoardViewProps> = ({
     captureAudioRef.current = new Audio('/sounds/capture.mp3');
     castleAudioRef.current = new Audio('/sounds/castle.mp3');
     checkAudioRef.current = new Audio('/sounds/check.mp3');
+    [moveAudioRef, captureAudioRef, castleAudioRef, checkAudioRef].forEach((ref) => {
+      if (ref.current) ref.current.volume = soundVolume;
+    });
     return () => {
       moveAudioRef.current = null;
       captureAudioRef.current = null;
       castleAudioRef.current = null;
       checkAudioRef.current = null;
     };
-  }, []);
+  }, [soundVolume]);
 
   useEffect(() => {
     if (!soundEnabled || activeMoveIndex < 0) return;
@@ -336,8 +341,9 @@ const ChessBoardView: React.FC<ChessBoardViewProps> = ({
           : moveAudioRef.current;
     if (!audio) return;
     audio.currentTime = 0;
+    audio.volume = soundVolume;
     audio.play().catch(() => null);
-  }, [activeMoveIndex, moveMeta, soundEnabled]);
+  }, [activeMoveIndex, moveMeta, soundEnabled, soundVolume]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
