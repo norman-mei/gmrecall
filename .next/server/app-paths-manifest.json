@@ -1,4 +1,3 @@
 {
-  "/account/page": "app/account/page.js",
-  "/api/auth/resend-verification/route": "app/api/auth/resend-verification/route.js"
+  "/account/page": "app/account/page.js"
 }
