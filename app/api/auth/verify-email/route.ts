@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { clearVerificationTokensForUser, hashValue, normalizeEmail } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+export const runtime = 'nodejs';
+
 function buildRedirect(requestUrl: string, status: 'success' | 'error') {
   const url = new URL(requestUrl);
   url.pathname = '/account';

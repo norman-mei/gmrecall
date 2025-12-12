@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { getCurrentUser, normalizeUsername } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+export const runtime = 'nodejs';
+
 const schema = z.object({
   username: z.string().min(2).max(32)
 });

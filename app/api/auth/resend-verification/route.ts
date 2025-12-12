@@ -10,6 +10,8 @@ import {
 import { prisma } from '@/lib/prisma';
 import { sendVerificationEmail } from '@/lib/mailer';
 
+export const runtime = 'nodejs';
+
 const bodySchema = z.object({
   email: z.string().email().optional()
 });

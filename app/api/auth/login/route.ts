@@ -10,6 +10,8 @@ import {
 } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+export const runtime = 'nodejs';
+
 const loginSchema = z.object({
   identifier: z.string().min(1),
   password: z.string().min(1),

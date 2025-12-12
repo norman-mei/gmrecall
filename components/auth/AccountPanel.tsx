@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { Check, X } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
 const cx = (...classes: Array<string | false | null | undefined>) =>
@@ -44,6 +45,7 @@ const cardClass =
 export default function AccountPanel() {
   const searchParams = useSearchParams();
   const verifiedState = searchParams.get('verified');
+  const router = useRouter();
 
   const { user, loading, refresh, logoutLocally } = useAuth();
   const [signupForm, setSignupForm] = useState<SignupFormState>(initialSignup);
@@ -78,6 +80,16 @@ export default function AccountPanel() {
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
   const [usernameMessage, setUsernameMessage] = useState<string | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
+
+  // New state for auth mode toggle
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+
+  // Danger zone state
+  const [isDeleting, setIsDeleting] = useState(false);
+  const deleteTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [deleteProgress, setDeleteProgress] = useState(0); // 0 to 100
+  const startTimeRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (verifiedState === 'success') {
@@ -129,7 +141,7 @@ export default function AccountPanel() {
 
     if (!email) {
       errors.email = 'Email is required.';
-    } else if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       errors.email = 'Enter a valid email address.';
     }
 
@@ -391,6 +403,64 @@ export default function AccountPanel() {
     }
   };
 
+  const performDeleteAccount = async () => {
+    try {
+      const response = await fetch('/api/auth/delete-account', {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        await logoutLocally();
+        router.push('/');
+        router.refresh();
+      } else {
+        alert('Failed to delete account. Please try again.');
+        setDeleteProgress(0);
+        setIsDeleting(false);
+      }
+    } catch (error) {
+      console.error('Delete error', error);
+      alert('Network error while deleting account.');
+      setDeleteProgress(0);
+      setIsDeleting(false);
+    }
+  };
+
+  const startDeleteTimer = () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    setDeleteProgress(0);
+    startTimeRef.current = Date.now();
+
+    const duration = 5000; // 5 seconds
+
+    const animate = () => {
+      const now = Date.now();
+      const elapsed = now - (startTimeRef.current || now);
+      const progress = Math.min((elapsed / duration) * 100, 100);
+
+      setDeleteProgress(progress);
+
+      if (progress < 100) {
+        rafRef.current = requestAnimationFrame(animate);
+      } else {
+        performDeleteAccount();
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(animate);
+  };
+
+  const cancelDeleteTimer = () => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    setIsDeleting(false);
+    setDeleteProgress(0);
+    startTimeRef.current = null;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -422,359 +492,409 @@ export default function AccountPanel() {
       )}
 
       {user ? (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <section className={cx(cardClass, 'p-6')}>
-            <div className="flex flex-col gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Signed in</p>
-                <p className="text-xl font-semibold text-[var(--text)]">{user.email}</p>
-                <p className="text-sm text-[var(--muted)]">
-                  Username: <span className="font-semibold text-[var(--text)]">{user.username ?? 'pending'}</span>
-                </p>
-              </div>
-              <p className="text-sm text-[var(--muted)]">
-                Sessions last 7 days (or 30 with “remember me”). Log out everywhere by clearing active devices.
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  onClick={handleLogout}
-                  className="rounded-full bg-[var(--text)] px-4 py-2 text-sm font-semibold text-[var(--bg)] transition hover:-translate-y-0.5"
-                >
-                  Log out
-                </button>
-                {loading && (
-                  <span className="text-xs text-[var(--muted)]">Refreshing session…</span>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <section className={cx(cardClass, 'p-6 space-y-4')}>
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <h3 className="text-lg font-semibold text-[var(--text)]">Update username</h3>
-                <p className="text-sm text-[var(--muted)]">This can be used to sign in.</p>
-              </div>
-              <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
-                Profile
-              </span>
-            </div>
-            <form className="space-y-3" onSubmit={handleChangeUsername}>
-              <Field
-                id="new-username"
-                label="Username"
-                type="text"
-                value={usernameForm.username}
-                onChange={(event) => setUsernameForm({ username: event.target.value })}
-                helperText="2-32 chars. Letters, numbers, symbols allowed."
-                required
-              />
-              {usernameMessage && <p className="text-sm font-semibold text-emerald-300">{usernameMessage}</p>}
-              {usernameError && <p className="text-sm font-semibold text-rose-300">{usernameError}</p>}
-              <button
-                type="submit"
-                disabled={usernameStatus === 'submitting'}
-                className="w-full rounded-full bg-[var(--text)] px-4 py-2 text-sm font-semibold text-[var(--bg)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {usernameStatus === 'submitting' ? 'Updating…' : 'Save username'}
-              </button>
-            </form>
-          </section>
-
-          <section className={cx(cardClass, 'p-6 space-y-4')}>
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <h3 className="text-lg font-semibold text-[var(--text)]">Update email</h3>
-                <p className="text-sm text-[var(--muted)]">Confirm with your current password.</p>
-              </div>
-              <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
-                Verification required
-              </span>
-            </div>
-            <form className="space-y-3" onSubmit={handleChangeEmail}>
-              <Field
-                id="new-email"
-                label="New email"
-                type="email"
-                value={emailForm.newEmail}
-                onChange={(event) =>
-                  setEmailForm((prev) => ({ ...prev, newEmail: event.target.value }))
-                }
-                autoComplete="email"
-                required
-              />
-              <Field
-                id="current-password-for-email"
-                label="Current password"
-                type="password"
-                value={emailForm.currentPassword}
-                onChange={(event) =>
-                  setEmailForm((prev) => ({ ...prev, currentPassword: event.target.value }))
-                }
-                autoComplete="current-password"
-                required
-              />
-              {emailMessage && (
-                <p className="text-sm font-semibold text-emerald-300">{emailMessage}</p>
-              )}
-              {emailError && <p className="text-sm font-semibold text-rose-300">{emailError}</p>}
-              <button
-                type="submit"
-                disabled={emailStatus === 'submitting'}
-                className="w-full rounded-full bg-gradient-to-r from-[#22c55e] to-[#4ade80] px-4 py-2 text-sm font-semibold text-black transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {emailStatus === 'submitting' ? 'Updating…' : 'Update email'}
-              </button>
-            </form>
-          </section>
-
-          <section className={cx(cardClass, 'p-6 space-y-4 lg:col-span-2')}>
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-[var(--text)]">Change password</h3>
-                <p className="text-sm text-[var(--muted)]">We hash everything server-side.</p>
-              </div>
-              <div className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
-                Security
-              </div>
-            </div>
-            <form className="grid gap-4 sm:grid-cols-3" onSubmit={handleChangePassword}>
-              <Field
-                id="current-password"
-                label="Current password"
-                type="password"
-                value={passwordForm.currentPassword}
-                onChange={(event) =>
-                  setPasswordForm((prev) => ({ ...prev, currentPassword: event.target.value }))
-                }
-                autoComplete="current-password"
-                required
-              />
-              <Field
-                id="new-password"
-                label="New password"
-                type="password"
-                value={passwordForm.newPassword}
-                onChange={(event) =>
-                  setPasswordForm((prev) => ({ ...prev, newPassword: event.target.value }))
-                }
-                autoComplete="new-password"
-                required
-              />
-              <Field
-                id="confirm-new-password"
-                label="Confirm new password"
-                type="password"
-                value={passwordForm.confirmPassword}
-                onChange={(event) =>
-                  setPasswordForm((prev) => ({ ...prev, confirmPassword: event.target.value }))
-                }
-                autoComplete="new-password"
-                required
-              />
-              <div className="sm:col-span-3 space-y-2">
-                {passwordMessage && (
-                  <p className="text-sm font-semibold text-emerald-300">{passwordMessage}</p>
-                )}
-                {passwordError && (
-                  <p className="text-sm font-semibold text-rose-300">{passwordError}</p>
-                )}
-              </div>
-              <div className="sm:col-span-3">
-                <button
-                  type="submit"
-                  disabled={passwordStatus === 'submitting'}
-                  className="w-full rounded-full bg-[var(--text)] px-4 py-2 text-sm font-semibold text-[var(--bg)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {passwordStatus === 'submitting' ? 'Updating…' : 'Save new password'}
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      ) : (
-        <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
-          <section className={cx(cardClass, 'p-6 space-y-4')}>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Create account</p>
-                <h2 className="text-xl font-semibold text-[var(--text)]">Start syncing progress</h2>
-                <p className="text-sm text-[var(--muted)]">
-                  We&apos;ll email you a verification link. Passwords are hashed before storing.
-                </p>
-              </div>
-              <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
-                Required
-              </span>
-            </div>
-            <form className="space-y-4" onSubmit={handleRegister}>
-              <Field
-                id="email"
-                label="Email address"
-                type="email"
-                value={signupForm.email}
-                onChange={handleSignupChange('email')}
-                error={signupErrors.email}
-                autoComplete="email"
-                required
-              />
-              <Field
-                id="confirm-email"
-                label="Confirm email address"
-                type="email"
-                value={signupForm.confirmEmail}
-                onChange={handleSignupChange('confirmEmail')}
-                error={signupErrors.confirmEmail}
-                autoComplete="email"
-                required
-              />
-              <Field
-                id="username"
-                label="Username"
-                type="text"
-                value={signupForm.username}
-                onChange={handleSignupChange('username')}
-                error={signupErrors.username}
-                helperText="Used for sign-in too. Leave blank to get an auto-generated handle."
-              />
-              <div className="grid gap-3 md:grid-cols-2">
-                <Field
-                  id="password"
-                  label="Password"
-                  type="password"
-                  value={signupForm.password}
-                  onChange={handleSignupChange('password')}
-                  error={signupErrors.password}
-                  autoComplete="new-password"
-                />
-                <Field
-                  id="confirm-password"
-                  label="Confirm password"
-                  type="password"
-                  value={signupForm.confirmPassword}
-                  onChange={handleSignupChange('confirmPassword')}
-                  error={signupErrors.confirmPassword}
-                  autoComplete="new-password"
-                />
-              </div>
-
-              <div className="rounded-2xl border border-[var(--border)]/60 bg-[var(--panel)] px-4 py-3">
-                <p className="text-sm font-semibold text-[var(--text)]">Password requirements</p>
-                <ul className="mt-2 space-y-2 text-sm text-[var(--muted)]">
-                  {passwordChecklist.map((rule) => (
-                    <li key={rule.label} className="flex items-center gap-2">
-                      <span
-                        className={cx(
-                          'inline-flex h-2.5 w-2.5 rounded-full',
-                          rule.met ? 'bg-[var(--accent)]' : 'bg-[var(--border)]'
-                        )}
-                      />
-                      {rule.label}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {signupApiError && (
-                <div className="rounded-2xl border border-rose-500/50 bg-rose-500/10 p-3 text-sm text-rose-100">
-                  {signupApiError}
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <section className={cx(cardClass, 'p-6')}>
+              <div className="flex flex-col gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Signed in</p>
+                  <p className="text-xl font-semibold text-[var(--text)]">{user.email}</p>
+                  <p className="text-sm text-[var(--muted)]">
+                    Username: <span className="font-semibold text-[var(--text)]">{user.username ?? 'pending'}</span>
+                  </p>
                 </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={signupStatus === 'submitting'}
-                className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#6366f1] via-[#8b5cf6] to-[#ec4899] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[var(--accent)]/40 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {signupStatus === 'success' ? 'Verification sent' : 'Create account'}
-              </button>
-            </form>
-
-            {signupStatus === 'success' && (
-              <div className="rounded-2xl border border-[var(--border)]/70 bg-[var(--panel-soft)]/70 p-4 text-sm text-[var(--muted)]">
-                <p className="font-semibold text-[var(--text)]">
-                  Check your inbox for a verification email.
+                <p className="text-sm text-[var(--muted)]">
+                  Sessions last 7 days (or 30 with “remember me”). Log out everywhere by clearing active devices.
                 </p>
-                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-3">
                   <button
-                    type="button"
-                    onClick={handleResendVerification}
-                    disabled={resendStatus === 'sending'}
-                    className="inline-flex w-full items-center justify-center rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] sm:w-auto"
+                    onClick={handleLogout}
+                    className="rounded-full bg-[var(--text)] px-4 py-2 text-sm font-semibold text-[var(--bg)] transition hover:-translate-y-0.5"
                   >
-                    {resendStatus === 'sending' ? 'Sending…' : 'Resend verification email'}
+                    Log out
                   </button>
-                  {resendMessage && (
-                    <p
-                      className={cx(
-                        'text-sm',
-                        resendStatus === 'error' ? 'text-rose-200' : 'text-emerald-200'
-                      )}
-                    >
-                      {resendMessage}
-                    </p>
+                  {loading && (
+                    <span className="text-xs text-[var(--muted)]">Refreshing session…</span>
                   )}
                 </div>
               </div>
-            )}
-          </section>
+            </section>
 
-          <section className={cx(cardClass, 'p-6 space-y-4')}>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Sign in</p>
-                <h2 className="text-xl font-semibold text-[var(--text)]">Welcome back</h2>
-                <p className="text-sm text-[var(--muted)]">
-                  Verified accounts can sync settings and streaks across devices.
-                </p>
+            <section className={cx(cardClass, 'p-6 space-y-4')}>
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-lg font-semibold text-[var(--text)]">Update username</h3>
+                  <p className="text-sm text-[var(--muted)]">This can be used to sign in.</p>
+                </div>
+                <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
+                  Profile
+                </span>
               </div>
-              <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
-                Secure
-              </span>
-            </div>
-            <form className="space-y-3" onSubmit={handleLogin}>
-              <Field
-                id="login-identifier"
-                label="Email or username"
-                type="text"
-                value={loginForm.identifier}
-                onChange={handleLoginChange('identifier')}
-                autoComplete="username"
-                required
-              />
-              <Field
-                id="login-password"
-                label="Password"
-                type="password"
-                value={loginForm.password}
-                onChange={handleLoginChange('password')}
-                autoComplete="current-password"
-                required
-              />
-              <label className="flex items-center gap-2 text-sm text-[var(--muted)]">
-                <input
-                  type="checkbox"
-                  checked={loginForm.rememberMe}
-                  onChange={handleLoginChange('rememberMe')}
-                  className="rounded border-[var(--border)] bg-[var(--panel)] text-[var(--accent)] focus:ring-[var(--accent)]"
+              <form className="space-y-3" onSubmit={handleChangeUsername}>
+                <Field
+                  id="new-username"
+                  label="Username"
+                  type="text"
+                  value={usernameForm.username}
+                  onChange={(event) => setUsernameForm({ username: event.target.value })}
+                  helperText="2-32 chars. Letters, numbers, symbols allowed."
+                  required
                 />
-                Remember me for 30 days
-              </label>
+                {usernameMessage && <p className="text-sm font-semibold text-emerald-300">{usernameMessage}</p>}
+                {usernameError && <p className="text-sm font-semibold text-rose-300">{usernameError}</p>}
+                <button
+                  type="submit"
+                  disabled={usernameStatus === 'submitting'}
+                  className="w-full rounded-full bg-[var(--text)] px-4 py-2 text-sm font-semibold text-[var(--bg)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {usernameStatus === 'submitting' ? 'Updating…' : 'Save username'}
+                </button>
+              </form>
+            </section>
 
-              {loginError && <p className="text-sm text-rose-200">{loginError}</p>}
-              {loginStatus === 'success' && (
-                <p className="text-sm text-emerald-200">Welcome back! Loading your data…</p>
+            <section className={cx(cardClass, 'p-6 space-y-4')}>
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-lg font-semibold text-[var(--text)]">Update email</h3>
+                  <p className="text-sm text-[var(--muted)]">Confirm with your current password.</p>
+                </div>
+                <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
+                  Verification required
+                </span>
+              </div>
+              <form className="space-y-3" onSubmit={handleChangeEmail}>
+                <Field
+                  id="new-email"
+                  label="New email"
+                  type="email"
+                  value={emailForm.newEmail}
+                  onChange={(event) =>
+                    setEmailForm((prev) => ({ ...prev, newEmail: event.target.value }))
+                  }
+                  autoComplete="email"
+                  required
+                />
+                <Field
+                  id="current-password-for-email"
+                  label="Current password"
+                  type="password"
+                  value={emailForm.currentPassword}
+                  onChange={(event) =>
+                    setEmailForm((prev) => ({ ...prev, currentPassword: event.target.value }))
+                  }
+                  autoComplete="current-password"
+                  required
+                />
+                {emailMessage && (
+                  <p className="text-sm font-semibold text-emerald-300">{emailMessage}</p>
+                )}
+                {emailError && <p className="text-sm font-semibold text-rose-300">{emailError}</p>}
+                <button
+                  type="submit"
+                  disabled={emailStatus === 'submitting'}
+                  className="w-full rounded-full bg-gradient-to-r from-[#22c55e] to-[#4ade80] px-4 py-2 text-sm font-semibold text-black transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {emailStatus === 'submitting' ? 'Updating…' : 'Update email'}
+                </button>
+              </form>
+            </section>
+
+            <section className={cx(cardClass, 'p-6 space-y-4 lg:col-span-2')}>
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-[var(--text)]">Change password</h3>
+                  <p className="text-sm text-[var(--muted)]">We hash everything server-side.</p>
+                </div>
+                <div className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
+                  Security
+                </div>
+              </div>
+              <form className="grid gap-4 sm:grid-cols-3" onSubmit={handleChangePassword}>
+                <Field
+                  id="current-password"
+                  label="Current password"
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={(event) =>
+                    setPasswordForm((prev) => ({ ...prev, currentPassword: event.target.value }))
+                  }
+                  autoComplete="current-password"
+                  required
+                />
+                <Field
+                  id="new-password"
+                  label="New password"
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(event) =>
+                    setPasswordForm((prev) => ({ ...prev, newPassword: event.target.value }))
+                  }
+                  autoComplete="new-password"
+                  required
+                />
+                <Field
+                  id="confirm-new-password"
+                  label="Confirm new password"
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(event) =>
+                    setPasswordForm((prev) => ({ ...prev, confirmPassword: event.target.value }))
+                  }
+                  autoComplete="new-password"
+                  required
+                />
+                <div className="sm:col-span-3 space-y-2">
+                  {passwordMessage && (
+                    <p className="text-sm font-semibold text-emerald-300">{passwordMessage}</p>
+                  )}
+                  {passwordError && (
+                    <p className="text-sm font-semibold text-rose-300">{passwordError}</p>
+                  )}
+                </div>
+                <div className="sm:col-span-3">
+                  <button
+                    type="submit"
+                    disabled={passwordStatus === 'submitting'}
+                    className="w-full rounded-full bg-[var(--text)] px-4 py-2 text-sm font-semibold text-[var(--bg)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {passwordStatus === 'submitting' ? 'Updating…' : 'Save new password'}
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+
+          <section className={cx(cardClass, 'p-6 space-y-4 border-rose-500/30 bg-rose-500/5')}>
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-rose-200">Danger Zone</h3>
+                <p className="text-sm text-rose-200/70">Permanently delete your account and all data.</p>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onMouseDown={startDeleteTimer}
+                onMouseUp={cancelDeleteTimer}
+                onMouseLeave={cancelDeleteTimer}
+                onTouchStart={startDeleteTimer}
+                onTouchEnd={cancelDeleteTimer}
+                className="relative w-full rounded-full border border-rose-500/50 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-200 transition active:scale-[0.98] select-none overflow-hidden"
+              >
+                <div
+                  className="absolute inset-0 bg-rose-500/20 transition-none"
+                  style={{ width: `${deleteProgress}%` }}
+                />
+                <span className="relative z-10">
+                  {isDeleting ? `Hold to delete...` : 'Hold 5 seconds to delete all data'}
+                </span>
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : (
+        <div className="mx-auto max-w-md">
+          {authMode === 'register' ? (
+            <section className={cx(cardClass, 'p-6 space-y-4')}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Create account</p>
+                  <h2 className="text-xl font-semibold text-[var(--text)]">Start syncing progress</h2>
+                  <p className="text-sm text-[var(--muted)]">
+                    We&apos;ll email you a verification link.
+                  </p>
+                </div>
+              </div>
+              <form className="space-y-4" onSubmit={handleRegister}>
+                <Field
+                  id="email"
+                  label="Email address"
+                  type="email"
+                  value={signupForm.email}
+                  onChange={handleSignupChange('email')}
+                  error={signupErrors.email}
+                  autoComplete="email"
+                  required
+                />
+                <Field
+                  id="confirm-email"
+                  label="Confirm email address"
+                  type="email"
+                  value={signupForm.confirmEmail}
+                  onChange={handleSignupChange('confirmEmail')}
+                  error={signupErrors.confirmEmail}
+                  autoComplete="email"
+                  required
+                />
+                <Field
+                  id="username"
+                  label="Username"
+                  type="text"
+                  value={signupForm.username}
+                  onChange={handleSignupChange('username')}
+                  error={signupErrors.username}
+                  helperText="Used for sign-in too. Leave blank to get an auto-generated handle."
+                />
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Field
+                    id="password"
+                    label="Password"
+                    type="password"
+                    value={signupForm.password}
+                    onChange={handleSignupChange('password')}
+                    error={signupErrors.password}
+                    autoComplete="new-password"
+                  />
+                  <Field
+                    id="confirm-password"
+                    label="Confirm password"
+                    type="password"
+                    value={signupForm.confirmPassword}
+                    onChange={handleSignupChange('confirmPassword')}
+                    error={signupErrors.confirmPassword}
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                <div className="rounded-2xl border border-[var(--border)]/60 bg-[var(--panel)] px-4 py-3">
+                  <p className="text-sm font-semibold text-[var(--text)]">Password requirements</p>
+                  <ul className="mt-2 space-y-2 text-sm text-[var(--muted)]">
+                    {passwordChecklist.map((rule) => (
+                      <li key={rule.label} className="flex items-center gap-2">
+                        {rule.met ? (
+                          <Check className="h-4 w-4 text-emerald-500" />
+                        ) : (
+                          <X className="h-4 w-4 text-rose-500" />
+                        )}
+                        <span className={rule.met ? 'text-emerald-700 dark:text-emerald-400 font-medium' : 'text-[var(--muted)]'}>{rule.label}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {signupApiError && (
+                  <div className="rounded-2xl border border-rose-500/50 bg-rose-500/10 p-3 text-sm text-rose-700 dark:text-rose-100">
+                    {signupApiError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={signupStatus === 'submitting'}
+                  className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#6366f1] via-[#8b5cf6] to-[#ec4899] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[var(--accent)]/40 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {signupStatus === 'success' ? 'Verification sent' : 'Create account'}
+                </button>
+              </form>
+
+              {signupStatus === 'success' && (
+                <div className="rounded-2xl border border-[var(--border)]/70 bg-[var(--panel-soft)]/70 p-4 text-sm text-[var(--muted)]">
+                  <p className="font-semibold text-[var(--text)]">
+                    Check your inbox for a verification email.
+                  </p>
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <button
+                      type="button"
+                      onClick={handleResendVerification}
+                      disabled={resendStatus === 'sending'}
+                      className="inline-flex w-full items-center justify-center rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] sm:w-auto"
+                    >
+                      {resendStatus === 'sending' ? 'Sending…' : 'Resend verification email'}
+                    </button>
+                    {resendMessage && (
+                      <p
+                        className={cx(
+                          'text-sm',
+                          resendStatus === 'error' ? 'text-rose-200' : 'text-emerald-200'
+                        )}
+                      >
+                        {resendMessage}
+                      </p>
+                    )}
+                  </div>
+                </div>
               )}
 
-              <button
-                type="submit"
-                disabled={loginStatus === 'submitting'}
-                className="w-full rounded-full border border-[var(--border)] bg-[var(--panel-soft)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {loginStatus === 'submitting' ? 'Signing in…' : 'Log in'}
-              </button>
-            </form>
-          </section>
+              <div className="pt-4 border-t border-[var(--border)] text-center">
+                <p className="text-sm text-[var(--muted)]">
+                  Already have an account?{' '}
+                  <button
+                    onClick={() => setAuthMode('login')}
+                    className="font-semibold text-[var(--accent)] hover:underline"
+                  >
+                    Sign in
+                  </button>
+                </p>
+              </div>
+            </section>
+          ) : (
+            <section className={cx(cardClass, 'p-6 space-y-4')}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Sign in</p>
+                  <h2 className="text-xl font-semibold text-[var(--text)]">Welcome back</h2>
+                  <p className="text-sm text-[var(--muted)]">
+                    Verified accounts can sync settings and streaks.
+                  </p>
+                </div>
+              </div>
+              <form className="space-y-3" onSubmit={handleLogin}>
+                <Field
+                  id="login-identifier"
+                  label="Email or username"
+                  type="text"
+                  value={loginForm.identifier}
+                  onChange={handleLoginChange('identifier')}
+                  autoComplete="username"
+                  required
+                />
+                <Field
+                  id="login-password"
+                  label="Password"
+                  type="password"
+                  value={loginForm.password}
+                  onChange={handleLoginChange('password')}
+                  autoComplete="current-password"
+                  required
+                />
+                <label className="flex items-center gap-2 text-sm text-[var(--muted)]">
+                  <input
+                    type="checkbox"
+                    checked={loginForm.rememberMe}
+                    onChange={handleLoginChange('rememberMe')}
+                    className="rounded border-[var(--border)] bg-[var(--panel)] text-[var(--accent)] focus:ring-[var(--accent)]"
+                  />
+                  Remember me for 30 days
+                </label>
+
+                {loginError && <p className="text-sm text-rose-200">{loginError}</p>}
+                {loginStatus === 'success' && (
+                  <p className="text-sm text-emerald-200">Welcome back! Loading your data…</p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loginStatus === 'submitting'}
+                  className="w-full rounded-full border border-[var(--border)] bg-[var(--panel-soft)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {loginStatus === 'submitting' ? 'Signing in…' : 'Log in'}
+                </button>
+              </form>
+
+              <div className="pt-4 border-t border-[var(--border)] text-center">
+                <p className="text-sm text-[var(--muted)]">
+                  Dont have an account?{' '}
+                  <button
+                    onClick={() => setAuthMode('register')}
+                    className="font-semibold text-[var(--accent)] hover:underline"
+                  >
+                    Register here
+                  </button>
+                </p>
+              </div>
+            </section>
+          )}
         </div>
       )}
 
@@ -818,12 +938,12 @@ function Field({
         onChange={onChange}
         autoComplete={autoComplete}
         required={required}
-                className={cx(
-                  'w-full rounded-2xl border bg-[var(--input-bg)] px-4 py-3 text-sm text-[var(--text)] outline-none transition',
-                  error
-                    ? 'border-rose-400 focus:border-rose-400 focus:ring-2 focus:ring-rose-400/40'
-                    : 'border-[var(--border)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/30'
-                )}
+        className={cx(
+          'w-full rounded-2xl border bg-[var(--input-bg)] px-4 py-3 text-sm text-[var(--text)] outline-none transition',
+          error
+            ? 'border-rose-400 focus:border-rose-400 focus:ring-2 focus:ring-rose-400/40'
+            : 'border-[var(--border)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/30'
+        )}
       />
       {error && <p className="text-sm text-rose-300">{error}</p>}
       {!error && helperText && <p className="text-xs text-[var(--muted)]">{helperText}</p>}

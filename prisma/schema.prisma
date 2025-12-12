@@ -38,6 +38,7 @@ model User {
   ratings          LevelRating[]
   scribbles        Scribble[]
   scribbleAttempts ScribbleAttempt[]
+  progress         UserProgress?
 }
 
 model Session {
@@ -85,7 +86,7 @@ model Level {
   id          String   @id @default(cuid())
   name        String
   creatorName String?
-  creator     User?    @relation(fields: [creatorId], references: [id])
+  creator     User?    @relation(fields: [creatorId], references: [id], onDelete: SetNull)
   creatorId   String?
   functionTex String
   difficulty  String
@@ -122,7 +123,7 @@ model LevelRating {
 model Scribble {
   id          String            @id @default(cuid())
   creatorName String?
-  creator     User?             @relation(fields: [creatorId], references: [id])
+  creator     User?             @relation(fields: [creatorId], references: [id], onDelete: SetNull)
   creatorId   String?
   points      String
   createdAt   DateTime          @default(now())
@@ -133,10 +134,18 @@ model ScribbleAttempt {
   id          String   @id @default(cuid())
   scribble    Scribble @relation(fields: [scribbleId], references: [id], onDelete: Cascade)
   scribbleId  String
-  user        User?    @relation(fields: [userId], references: [id])
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   userId      String?
   userName    String?
   functionTex String
   accuracy    Float
   createdAt   DateTime @default(now())
+}
+
+model UserProgress {
+  userId   String  @id
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  data     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

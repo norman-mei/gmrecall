@@ -6,6 +6,8 @@ import { getCurrentUser, hashValue, normalizeEmail, verifyPassword } from '@/lib
 import { prisma } from '@/lib/prisma';
 import { sendVerificationEmail } from '@/lib/mailer';
 
+export const runtime = 'nodejs';
+
 const changeEmailSchema = z.object({
   newEmail: z.string().email(),
   currentPassword: z.string().min(1)

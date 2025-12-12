@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST='{"app\\\\page.tsx -> @/components/ChessBoardView":{"id":940,"files":["static/chunks/940.b5dd0aff1e8415af.js"]},"app\\\\page.tsx -> canvas-confetti":{"id":965,"files":["static/chunks/965.450a4c0184d27200.js"]}}';
+self.__REACT_LOADABLE_MANIFEST="{}"

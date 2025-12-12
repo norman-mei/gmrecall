@@ -45,3 +45,33 @@ export interface GameState {
   message: string | null;
   hintsRemaining: number;
 }
+
+export interface ResumeState {
+  status: GameStatus;
+  currentOpening: ChessOpening | null;
+  score: number;
+  lives: number;
+  history: string[];
+  hintsRemaining: number;
+  inputStr?: string;
+  openingStats?: { livesLost: number; hintsUsed: number };
+  message?: string | null;
+}
+
+export interface SessionEntry {
+  name: string;
+  moves: string;
+  livesLost: number;
+  hintsUsed: number;
+  scoreAfter: number;
+  outcome: 'solved' | 'skipped' | 'failed' | 'unfinished';
+}
+
+export interface UserProgressPayload {
+  settings: GameSettings;
+  stats: PlayerStats;
+  gameHistory: GameRecord[];
+  sessionHistory: SessionEntry[];
+  resumeState?: ResumeState | null;
+  updatedAt?: number;
+}

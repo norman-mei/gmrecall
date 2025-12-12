@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { getCurrentUser, hashPassword, verifyPassword } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+export const runtime = 'nodejs';
+
 const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1),

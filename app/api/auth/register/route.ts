@@ -11,6 +11,8 @@ import {
 import { prisma } from '@/lib/prisma';
 import { sendVerificationEmail } from '@/lib/mailer';
 
+export const runtime = 'nodejs';
+
 const registerSchema = z
   .object({
     email: z.string().email(),

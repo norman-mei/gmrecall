@@ -84,17 +84,36 @@ const GameControls: React.FC<GameControlsProps> = ({
                 </div>
                 <div className="bg-white dark:bg-zinc-800 p-4 rounded-2xl shadow-md border border-gray-100 dark:border-zinc-700 text-center">
                     <p className="text-xs uppercase tracking-widest text-gray-400 font-bold mb-1">Lives</p>
-                    <div className="flex justify-center gap-1 mt-2">
-                        {[...Array(INITIAL_LIVES)].map((_, i) => (
-                            <Heart
-                                key={i}
-                                size={20}
-                                className={`transition-all duration-300 ${i < gameState.lives
-                                    ? 'fill-red-500 text-red-500'
-                                    : 'fill-gray-200 dark:fill-zinc-700 text-gray-200 dark:text-zinc-700'
-                                    }`}
-                            />
-                        ))}
+                    <div className="flex flex-col items-center gap-2 mt-2">
+                        <div className="flex justify-center gap-1.5">
+                            {[...Array(Math.min(3, INITIAL_LIVES))].map((_, i) => (
+                                <Heart
+                                    key={`top-${i}`}
+                                    size={20}
+                                    className={`transition-all duration-300 ${i < gameState.lives
+                                        ? 'fill-red-500 text-red-500'
+                                        : 'fill-gray-200 dark:fill-zinc-700 text-gray-200 dark:text-zinc-700'
+                                        }`}
+                                />
+                            ))}
+                        </div>
+                        {INITIAL_LIVES > 3 && (
+                            <div className="flex justify-center gap-1.5">
+                                {[...Array(Math.max(0, INITIAL_LIVES - 3))].map((_, idx) => {
+                                    const heartIndex = idx + 3;
+                                    return (
+                                        <Heart
+                                            key={`bottom-${idx}`}
+                                            size={20}
+                                            className={`transition-all duration-300 ${heartIndex < gameState.lives
+                                                ? 'fill-red-500 text-red-500'
+                                                : 'fill-gray-200 dark:fill-zinc-700 text-gray-200 dark:text-zinc-700'
+                                                }`}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 </div>
                 <div className="bg-white dark:bg-zinc-800 p-4 rounded-2xl shadow-md border border-gray-100 dark:border-zinc-700 text-center">

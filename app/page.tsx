@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
@@ -14,7 +14,17 @@ import PasswordModal from '@/components/PasswordModal';
 import OpeningsModal from '@/components/OpeningsModal';
 import { checkGuess, getRandomOpening, normalizeString } from '@/utils/gameLogic';
 import { readLocalNumber, persistLocalNumber } from '@/utils/helpers';
-import { GameRecord, GameSettings, GameState, PlayerStats, Difficulty } from '@/types';
+import {
+  GameRecord,
+  GameSettings,
+  GameState,
+  PlayerStats,
+  Difficulty,
+  SessionEntry,
+  UserProgressPayload,
+  ResumeState
+} from '@/types';
+import { useAuth } from '@/context/AuthContext';
 
 import GameControls from '@/components/GameControls';
 
@@ -22,15 +32,6 @@ const ChessBoardView = dynamic(() => import('@/components/ChessBoardView'), { ss
 
 const INITIAL_LIVES = 5;
 const MAX_HINTS = 3;
-
-type SessionEntry = {
-  name: string;
-  moves: string;
-  livesLost: number;
-  hintsUsed: number;
-  scoreAfter: number;
-  outcome: 'solved' | 'skipped' | 'failed' | 'unfinished';
-};
 
 const DEFAULT_SETTINGS: GameSettings = {
   showCoordinates: true,
@@ -68,13 +69,109 @@ const persistLocalStorage = (key: string, value: unknown) => {
   }
 };
 
+const normalizeTimestamp = (value: unknown): number | null => {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const ts = Date.parse(value);
+    return Number.isNaN(ts) ? null : ts;
+  }
+  return null;
+};
+
+const mergeGameHistory = (remote: GameRecord[], local: GameRecord[]) => {
+  const records = new Map<string, GameRecord>();
+  [...remote, ...local].forEach((record) => {
+    records.set(record.id, record);
+  });
+  return Array.from(records.values()).sort((a, b) => a.timestamp - b.timestamp);
+};
+
+const mergeSessionHistory = (remote: SessionEntry[], local: SessionEntry[]) => {
+  const seen = new Set<string>();
+  const merged: SessionEntry[] = [];
+
+  [...remote, ...local].forEach((entry) => {
+    const key = `${entry.name}-${entry.moves}-${entry.scoreAfter}-${entry.outcome}-${entry.livesLost}-${entry.hintsUsed}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      merged.push(entry);
+    }
+  });
+
+  return merged;
+};
+
+const pickLatestResumeState = (
+  remote: ResumeState | null | undefined,
+  remoteUpdated: number,
+  local: ResumeState | null | undefined,
+  localUpdated: number
+) => {
+  if (!remote && !local) return null;
+  if (remote && !local) return remote;
+  if (local && !remote) return local;
+  if (!remote || !local) return local ?? remote ?? null;
+  return remoteUpdated > localUpdated ? remote : local;
+};
+
+const mergeProgressPayload = (
+  remote: UserProgressPayload,
+  local: UserProgressPayload,
+  remoteUpdatedAt: number,
+  localUpdatedAt: number
+): UserProgressPayload => {
+  const mergedSettings: GameSettings = {
+    ...DEFAULT_SETTINGS,
+    ...remote.settings,
+    ...local.settings
+  };
+
+  const mergedGameHistory = mergeGameHistory(remote.gameHistory, local.gameHistory);
+  const mergedSessionHistory = mergeSessionHistory(remote.sessionHistory, local.sessionHistory);
+
+  const bestFromGames = mergedGameHistory.reduce(
+    (max, record) => Math.max(max, record.score),
+    0
+  );
+
+  const mergedStats: PlayerStats = {
+    gamesPlayed: Math.max(
+      remote.stats.gamesPlayed,
+      local.stats.gamesPlayed,
+      mergedGameHistory.length
+    ),
+    bestScore: Math.max(remote.stats.bestScore, local.stats.bestScore, bestFromGames),
+    totalGuesses: Math.max(remote.stats.totalGuesses, local.stats.totalGuesses),
+    correctGuesses: Math.max(remote.stats.correctGuesses, local.stats.correctGuesses)
+  };
+
+  const resumeState = pickLatestResumeState(
+    remote.resumeState,
+    remoteUpdatedAt,
+    local.resumeState,
+    localUpdatedAt
+  );
+
+  return {
+    settings: mergedSettings,
+    stats: mergedStats,
+    gameHistory: mergedGameHistory,
+    sessionHistory: mergedSessionHistory,
+    resumeState,
+    updatedAt: Math.max(remoteUpdatedAt, localUpdatedAt)
+  };
+};
+
 export default function Page() {
+  const { user, loading: authLoading } = useAuth();
+  const [mounted, setMounted] = useState(false);
+  const storedResume = readLocalStorage<ResumeState | null>('chess-resume-state', null);
   const [systemPrefersDark, setSystemPrefersDark] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isOpeningsOpen, setIsOpeningsOpen] = useState(false);
   // openingsSearch/Sort moved to OpeningsModal component for performance
-  const [inputStr, setInputStr] = useState('');
+  const [inputStr, setInputStr] = useState(() => storedResume?.inputStr ?? '');
   const [historySearch, setHistorySearch] = useState('');
   const [historySort, setHistorySort] = useState('recent');
 
@@ -93,21 +190,38 @@ export default function Page() {
     readLocalStorage('chess-history', []),
   );
 
-  const [gameState, setGameState] = useState<GameState>({
-    status: 'idle',
-    currentOpening: null,
-    score: 0,
-    lives: INITIAL_LIVES,
-    history: [],
-    message: null,
-    hintsRemaining: MAX_HINTS,
+  const [gameState, setGameState] = useState<GameState>(() => {
+    if (storedResume?.status === 'playing' && storedResume.currentOpening) {
+      return {
+        status: 'playing',
+        currentOpening: storedResume.currentOpening,
+        score: storedResume.score ?? 0,
+        lives: storedResume.lives ?? INITIAL_LIVES,
+        history: storedResume.history ?? [],
+        message: storedResume.message ?? null,
+        hintsRemaining: storedResume.hintsRemaining ?? MAX_HINTS,
+      };
+    }
+    return {
+      status: 'idle',
+      currentOpening: null,
+      score: 0,
+      lives: INITIAL_LIVES,
+      history: [],
+      message: null,
+      hintsRemaining: MAX_HINTS,
+    };
   });
 
   const [feedbackState, setFeedbackState] = useState<'none' | 'correct' | 'incorrect'>('none');
   const [sessionHistory, setSessionHistory] = useState<SessionEntry[]>(() =>
     readLocalStorage('chess-session-history', []),
   );
-  const [openingStats, setOpeningStats] = useState<{ livesLost: number; hintsUsed: number }>({ livesLost: 0, hintsUsed: 0 });
+  const [hasHydratedAccount, setHasHydratedAccount] = useState(false);
+  const [isSyncingAccount, setIsSyncingAccount] = useState(false);
+  const [openingStats, setOpeningStats] = useState<{ livesLost: number; hintsUsed: number }>(() =>
+    storedResume?.openingStats ?? { livesLost: 0, hintsUsed: 0 },
+  );
   const [autoAdvanceSeconds, setAutoAdvanceSeconds] = useState<number | null>(null);
   const [isSolutionRevealed, setIsSolutionRevealed] = useState(false);
   const [animationDelay, setAnimationDelay] = useState<number>(() =>
@@ -116,6 +230,66 @@ export default function Page() {
   const autoAdvanceTimeoutRef = useRef<number | null>(null);
   const autoAdvanceIntervalRef = useRef<number | null>(null);
   const skipClickRef = useRef<number | null>(null);
+  const saveProgressTimeoutRef = useRef<number | null>(null);
+  const latestProgressRef = useRef<UserProgressPayload>({
+    settings,
+    stats,
+    gameHistory,
+    sessionHistory,
+    resumeState: {
+      status: gameState.status,
+      currentOpening: gameState.currentOpening,
+      score: gameState.score,
+      lives: gameState.lives,
+      history: gameState.history,
+      hintsRemaining: gameState.hintsRemaining,
+      inputStr,
+      openingStats,
+      message: gameState.message,
+    },
+    updatedAt: Date.now(),
+  });
+
+  useEffect(() => {
+    latestProgressRef.current = {
+      settings,
+      stats,
+      gameHistory,
+      sessionHistory,
+      resumeState: {
+        status: gameState.status,
+        currentOpening: gameState.currentOpening,
+        score: gameState.score,
+        lives: gameState.lives,
+        history: gameState.history,
+        hintsRemaining: gameState.hintsRemaining,
+        inputStr,
+        openingStats,
+        message: gameState.message,
+      },
+      updatedAt: Date.now(),
+    };
+  }, [settings, stats, gameHistory, sessionHistory, gameState, inputStr, openingStats]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const pushProgressToServer = useCallback(
+    async (payload: UserProgressPayload) => {
+      if (!user) return;
+      try {
+        await fetch('/api/user/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (error) {
+        console.error('Failed to save account progress', error);
+      }
+    },
+    [user]
+  );
 
   useEffect(() => {
     persistLocalStorage('chess-settings', settings);
@@ -142,6 +316,74 @@ export default function Page() {
   }, [animationDelay]);
 
   useEffect(() => {
+    if (authLoading || !user) {
+      setHasHydratedAccount(false);
+      setIsSyncingAccount(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const hydrateFromAccount = async () => {
+      setIsSyncingAccount(true);
+      try {
+        const response = await fetch('/api/user/progress', { cache: 'no-store' });
+        const payload = response.ok ? await response.json().catch(() => null) : null;
+        const remote = payload?.progress as UserProgressPayload | null;
+        const remoteUpdatedAt =
+          normalizeTimestamp(remote?.updatedAt) ??
+          normalizeTimestamp(payload?.updatedAt) ??
+          0;
+        const localUpdatedAt = normalizeTimestamp(latestProgressRef.current.updatedAt) ?? 0;
+        const merged = remote
+          ? mergeProgressPayload(remote, latestProgressRef.current, remoteUpdatedAt, localUpdatedAt)
+          : latestProgressRef.current;
+
+        if (cancelled) return;
+        latestProgressRef.current = merged;
+        setSettings(merged.settings);
+        setStats(merged.stats);
+        setGameHistory(merged.gameHistory);
+        setSessionHistory(merged.sessionHistory);
+        if (merged.resumeState?.currentOpening) {
+          setGameState((prev) => ({
+            ...prev,
+            status: merged.resumeState?.status ?? 'playing',
+            currentOpening: merged.resumeState?.currentOpening ?? prev.currentOpening,
+            score: merged.resumeState?.score ?? prev.score,
+            lives: merged.resumeState?.lives ?? prev.lives,
+            history: merged.resumeState?.history ?? prev.history,
+            message: merged.resumeState?.message ?? null,
+            hintsRemaining: merged.resumeState?.hintsRemaining ?? prev.hintsRemaining,
+          }));
+          setInputStr(merged.resumeState?.inputStr ?? '');
+          setOpeningStats(merged.resumeState?.openingStats ?? { livesLost: 0, hintsUsed: 0 });
+        }
+
+        await pushProgressToServer(merged);
+        if (!cancelled) {
+          setHasHydratedAccount(true);
+        }
+      } catch (error) {
+        console.error('Failed to sync account progress', error);
+        if (!cancelled) {
+          setHasHydratedAccount(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsSyncingAccount(false);
+        }
+      }
+    };
+
+    hydrateFromAccount();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, user, pushProgressToServer]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     setSystemPrefersDark(media.matches);
@@ -158,6 +400,36 @@ export default function Page() {
     if (typeof document === 'undefined') return;
     document.documentElement.classList.toggle('dark', isDarkMode);
   }, [isDarkMode]);
+
+  useEffect(() => {
+    if (!user || !hasHydratedAccount || isSyncingAccount) return;
+
+    if (saveProgressTimeoutRef.current) {
+      clearTimeout(saveProgressTimeoutRef.current);
+    }
+
+    saveProgressTimeoutRef.current = window.setTimeout(() => {
+      pushProgressToServer(latestProgressRef.current);
+    }, 800);
+
+    return () => {
+      if (saveProgressTimeoutRef.current) {
+        clearTimeout(saveProgressTimeoutRef.current);
+      }
+    };
+  }, [
+    user,
+    hasHydratedAccount,
+    isSyncingAccount,
+    settings,
+    stats,
+    gameHistory,
+    sessionHistory,
+    gameState,
+    inputStr,
+    openingStats,
+    pushProgressToServer
+  ]);
 
   // Auto-start the game on initial load
   useEffect(() => {
@@ -590,6 +862,10 @@ export default function Page() {
   }, [movesSidebarWidth]);
 
   useEffect(() => {
+    persistLocalStorage('chess-resume-state', latestProgressRef.current.resumeState ?? null);
+  }, [gameState, inputStr, openingStats]);
+
+  useEffect(() => {
     // Reset reveal state whenever a new opening is loaded.
     setIsSolutionRevealed(false);
   }, [gameState.currentOpening?.name]);
@@ -725,6 +1001,7 @@ export default function Page() {
 
 
   return (
+    !mounted ? null :
     <div className="min-h-screen w-full bg-gray-50 dark:bg-zinc-900 text-gray-800 dark:text-gray-100 transition-colors duration-500 font-sans flex flex-col overflow-hidden">
       <SettingsModal
         isOpen={isSettingsOpen}
@@ -754,16 +1031,6 @@ export default function Page() {
 
       <header className="absolute top-0 w-full p-6 flex justify-end items-start z-40 pointer-events-none">
         <div className="pointer-events-auto relative flex items-center justify-end gap-3">
-          <button
-            onClick={() => setIsOpeningsOpen(true)}
-            className="group flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-out hover:pr-6 hover:ring-4 ring-blue-500/20"
-            title="Openings"
-          >
-            <Book className="w-6 h-6 text-gray-700 dark:text-gray-200 transition-transform duration-500 group-hover:-rotate-6" />
-            <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-bold text-gray-700 dark:text-gray-200 opacity-0 group-hover:max-w-[120px] group-hover:opacity-100 transition-all duration-500 ease-in-out">
-              Openings
-            </span>
-          </button>
           <Link
             href="/account"
             className="group flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-out hover:pr-6 hover:ring-4 ring-blue-500/20"
@@ -774,6 +1041,16 @@ export default function Page() {
               Account
             </span>
           </Link>
+          <button
+            onClick={() => setIsOpeningsOpen(true)}
+            className="group flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-out hover:pr-6 hover:ring-4 ring-blue-500/20"
+            title="Openings"
+          >
+            <Book className="w-6 h-6 text-gray-700 dark:text-gray-200 transition-transform duration-500 group-hover:-rotate-6" />
+            <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-bold text-gray-700 dark:text-gray-200 opacity-0 group-hover:max-w-[120px] group-hover:opacity-100 transition-all duration-500 ease-in-out">
+              Openings
+            </span>
+          </button>
           <button
             onClick={() => setIsHistoryOpen(true)}
             className="group flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-out hover:pr-6 hover:ring-4 ring-blue-500/20"
