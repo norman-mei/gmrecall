@@ -8,11 +8,35 @@ const {
   BREVO_USER,
   BREVO_PASS,
   MAIL_FROM_EMAIL,
-  MAIL_FROM_NAME
+  MAIL_FROM_NAME,
+  VERCEL_URL
 } = process.env;
 
+function normalizeUrlCandidate(url: string) {
+  if (!url) return null;
+  // Prepend https if protocol is missing
+  if (!/^https?:\/\//i.test(url)) {
+    return `https://${url}`;
+  }
+  return url;
+}
+
 function resolveBaseUrl() {
-  return APP_BASE_URL ?? NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
+  const rawCandidates = [
+    APP_BASE_URL,
+    NEXT_PUBLIC_BASE_URL,
+    VERCEL_URL ? `https://${VERCEL_URL}` : null
+  ].filter(Boolean) as string[];
+
+  const candidates = rawCandidates
+    .map(normalizeUrlCandidate)
+    .filter(Boolean) as string[];
+
+  for (const url of candidates) {
+    if (!/localhost|127\.0\.0\.1/i.test(url)) return url;
+  }
+
+  return candidates[0] ?? 'http://localhost:3000';
 }
 
 let transporter: nodemailer.Transporter | null = null;
