@@ -3,6 +3,10 @@ const nextConfig = {
   reactStrictMode: true,
   experimental: {
     serverComponentsExternalPackages: ["better-sqlite3", "@prisma/adapter-better-sqlite3"],
+    outputFileTracingIncludes: {
+      "/api/auth/**": ["./dev.db"],
+      "/api/user/**": ["./dev.db"]
+    },
   },
 };
 
