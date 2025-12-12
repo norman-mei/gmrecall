@@ -83,6 +83,16 @@ module.exports = import("@prisma/adapter-better-sqlite3");;
 
 /***/ }),
 
+/***/ "child_process":
+/*!********************************!*\
+  !*** external "child_process" ***!
+  \********************************/
+/***/ ((module) => {
+
+module.exports = require("child_process");
+
+/***/ }),
+
 /***/ "crypto":
 /*!*************************!*\
   !*** external "crypto" ***!
@@ -93,6 +103,66 @@ module.exports = require("crypto");
 
 /***/ }),
 
+/***/ "dns":
+/*!**********************!*\
+  !*** external "dns" ***!
+  \**********************/
+/***/ ((module) => {
+
+module.exports = require("dns");
+
+/***/ }),
+
+/***/ "events":
+/*!*************************!*\
+  !*** external "events" ***!
+  \*************************/
+/***/ ((module) => {
+
+module.exports = require("events");
+
+/***/ }),
+
+/***/ "fs":
+/*!*********************!*\
+  !*** external "fs" ***!
+  \*********************/
+/***/ ((module) => {
+
+module.exports = require("fs");
+
+/***/ }),
+
+/***/ "http":
+/*!***********************!*\
+  !*** external "http" ***!
+  \***********************/
+/***/ ((module) => {
+
+module.exports = require("http");
+
+/***/ }),
+
+/***/ "https":
+/*!************************!*\
+  !*** external "https" ***!
+  \************************/
+/***/ ((module) => {
+
+module.exports = require("https");
+
+/***/ }),
+
+/***/ "net":
+/*!**********************!*\
+  !*** external "net" ***!
+  \**********************/
+/***/ ((module) => {
+
+module.exports = require("net");
+
+/***/ }),
+
 /***/ "node:crypto":
 /*!******************************!*\
   !*** external "node:crypto" ***!
@@ -100,6 +170,76 @@ module.exports = require("crypto");
 /***/ ((module) => {
 
 module.exports = require("node:crypto");
+
+/***/ }),
+
+/***/ "os":
+/*!*********************!*\
+  !*** external "os" ***!
+  \*********************/
+/***/ ((module) => {
+
+module.exports = require("os");
+
+/***/ }),
+
+/***/ "path":
+/*!***********************!*\
+  !*** external "path" ***!
+  \***********************/
+/***/ ((module) => {
+
+module.exports = require("path");
+
+/***/ }),
+
+/***/ "stream":
+/*!*************************!*\
+  !*** external "stream" ***!
+  \*************************/
+/***/ ((module) => {
+
+module.exports = require("stream");
+
+/***/ }),
+
+/***/ "tls":
+/*!**********************!*\
+  !*** external "tls" ***!
+  \**********************/
+/***/ ((module) => {
+
+module.exports = require("tls");
+
+/***/ }),
+
+/***/ "url":
+/*!**********************!*\
+  !*** external "url" ***!
+  \**********************/
+/***/ ((module) => {
+
+module.exports = require("url");
+
+/***/ }),
+
+/***/ "util":
+/*!***********************!*\
+  !*** external "util" ***!
+  \***********************/
+/***/ ((module) => {
+
+module.exports = require("util");
+
+/***/ }),
+
+/***/ "zlib":
+/*!***********************!*\
+  !*** external "zlib" ***!
+  \***********************/
+/***/ ((module) => {
+
+module.exports = require("zlib");
 
 /***/ }),
 
@@ -139,7 +279,7 @@ eval("__webpack_require__.a(module, async (__webpack_handle_async_dependencies__
   \***********************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   sendVerificationEmail: () => (/* binding */ sendVerificationEmail)\n/* harmony export */ });\nconst { APP_BASE_URL, NEXT_PUBLIC_BASE_URL } = process.env;\nfunction resolveBaseUrl() {\n    return APP_BASE_URL ?? NEXT_PUBLIC_BASE_URL ?? \"http://localhost:3000\";\n}\nasync function sendVerificationEmail(to, token, newEmail) {\n    const baseUrl = resolveBaseUrl();\n    const verifyUrl = new URL(\"/api/auth/verify-email\", baseUrl);\n    verifyUrl.searchParams.set(\"token\", token);\n    if (newEmail) {\n        verifyUrl.searchParams.set(\"newEmail\", newEmail);\n    }\n    // In this environment we skip SMTP and just log the link so the build does not depend on nodemailer.\n    console.warn(\"Verification email stubbed. Send this link manually:\", {\n        to,\n        verifyUrl: verifyUrl.toString(),\n        newEmail: newEmail ?? null\n    });\n}\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKHJzYykvLi9saWIvbWFpbGVyLnRzIiwibWFwcGluZ3MiOiI7Ozs7QUFBQSxNQUFNLEVBQUVBLFlBQVksRUFBRUMsb0JBQW9CLEVBQUUsR0FBR0MsUUFBUUMsR0FBRztBQUUxRCxTQUFTQztJQUNQLE9BQU9KLGdCQUFnQkMsd0JBQXdCO0FBQ2pEO0FBRU8sZUFBZUksc0JBQXNCQyxFQUFVLEVBQUVDLEtBQWEsRUFBRUMsUUFBaUI7SUFDdEYsTUFBTUMsVUFBVUw7SUFDaEIsTUFBTU0sWUFBWSxJQUFJQyxJQUFJLDBCQUEwQkY7SUFDcERDLFVBQVVFLFlBQVksQ0FBQ0MsR0FBRyxDQUFDLFNBQVNOO0lBQ3BDLElBQUlDLFVBQVU7UUFDWkUsVUFBVUUsWUFBWSxDQUFDQyxHQUFHLENBQUMsWUFBWUw7SUFDekM7SUFFQSxxR0FBcUc7SUFDckdNLFFBQVFDLElBQUksQ0FBQyx3REFBd0Q7UUFDbkVUO1FBQ0FJLFdBQVdBLFVBQVVNLFFBQVE7UUFDN0JSLFVBQVVBLFlBQVk7SUFDeEI7QUFDRiIsInNvdXJjZXMiOlsid2VicGFjazovL2dyYW5kbWFzdGVyLXJlY2FsbC8uL2xpYi9tYWlsZXIudHM/NzJjOCJdLCJzb3VyY2VzQ29udGVudCI6WyJjb25zdCB7IEFQUF9CQVNFX1VSTCwgTkVYVF9QVUJMSUNfQkFTRV9VUkwgfSA9IHByb2Nlc3MuZW52O1xuXG5mdW5jdGlvbiByZXNvbHZlQmFzZVVybCgpIHtcbiAgcmV0dXJuIEFQUF9CQVNFX1VSTCA/PyBORVhUX1BVQkxJQ19CQVNFX1VSTCA/PyAnaHR0cDovL2xvY2FsaG9zdDozMDAwJztcbn1cblxuZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIHNlbmRWZXJpZmljYXRpb25FbWFpbCh0bzogc3RyaW5nLCB0b2tlbjogc3RyaW5nLCBuZXdFbWFpbD86IHN0cmluZykge1xuICBjb25zdCBiYXNlVXJsID0gcmVzb2x2ZUJhc2VVcmwoKTtcbiAgY29uc3QgdmVyaWZ5VXJsID0gbmV3IFVSTCgnL2FwaS9hdXRoL3ZlcmlmeS1lbWFpbCcsIGJhc2VVcmwpO1xuICB2ZXJpZnlVcmwuc2VhcmNoUGFyYW1zLnNldCgndG9rZW4nLCB0b2tlbik7XG4gIGlmIChuZXdFbWFpbCkge1xuICAgIHZlcmlmeVVybC5zZWFyY2hQYXJhbXMuc2V0KCduZXdFbWFpbCcsIG5ld0VtYWlsKTtcbiAgfVxuXG4gIC8vIEluIHRoaXMgZW52aXJvbm1lbnQgd2Ugc2tpcCBTTVRQIGFuZCBqdXN0IGxvZyB0aGUgbGluayBzbyB0aGUgYnVpbGQgZG9lcyBub3QgZGVwZW5kIG9uIG5vZGVtYWlsZXIuXG4gIGNvbnNvbGUud2FybignVmVyaWZpY2F0aW9uIGVtYWlsIHN0dWJiZWQuIFNlbmQgdGhpcyBsaW5rIG1hbnVhbGx5OicsIHtcbiAgICB0byxcbiAgICB2ZXJpZnlVcmw6IHZlcmlmeVVybC50b1N0cmluZygpLFxuICAgIG5ld0VtYWlsOiBuZXdFbWFpbCA/PyBudWxsXG4gIH0pO1xufVxuIl0sIm5hbWVzIjpbIkFQUF9CQVNFX1VSTCIsIk5FWFRfUFVCTElDX0JBU0VfVVJMIiwicHJvY2VzcyIsImVudiIsInJlc29sdmVCYXNlVXJsIiwic2VuZFZlcmlmaWNhdGlvbkVtYWlsIiwidG8iLCJ0b2tlbiIsIm5ld0VtYWlsIiwiYmFzZVVybCIsInZlcmlmeVVybCIsIlVSTCIsInNlYXJjaFBhcmFtcyIsInNldCIsImNvbnNvbGUiLCJ3YXJuIiwidG9TdHJpbmciXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///(rsc)/./lib/mailer.ts\n");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   sendVerificationEmail: () => (/* binding */ sendVerificationEmail)\n/* harmony export */ });\n/* harmony import */ var nodemailer__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! nodemailer */ \"(rsc)/./node_modules/nodemailer/lib/nodemailer.js\");\n\nconst { APP_BASE_URL, NEXT_PUBLIC_BASE_URL, BREVO_HOST, BREVO_PORT, BREVO_USER, BREVO_PASS, MAIL_FROM_EMAIL, MAIL_FROM_NAME } = process.env;\nfunction resolveBaseUrl() {\n    return APP_BASE_URL ?? NEXT_PUBLIC_BASE_URL ?? \"http://localhost:3000\";\n}\nlet transporter = null;\nfunction getTransporter() {\n    if (transporter) return transporter;\n    if (!BREVO_HOST || !BREVO_PORT || !BREVO_USER || !BREVO_PASS) {\n        return null;\n    }\n    transporter = nodemailer__WEBPACK_IMPORTED_MODULE_0__.createTransport({\n        host: BREVO_HOST,\n        port: Number(BREVO_PORT),\n        secure: false,\n        auth: {\n            user: BREVO_USER,\n            pass: BREVO_PASS\n        }\n    });\n    return transporter;\n}\nasync function sendVerificationEmail(to, token, newEmail) {\n    const baseUrl = resolveBaseUrl();\n    const verifyUrl = new URL(\"/api/auth/verify-email\", baseUrl);\n    verifyUrl.searchParams.set(\"token\", token);\n    if (newEmail) {\n        verifyUrl.searchParams.set(\"newEmail\", newEmail);\n    }\n    const transport = getTransporter();\n    if (!transport) {\n        console.warn(\"Verification email stubbed. Send this link manually:\", {\n            to,\n            verifyUrl: verifyUrl.toString(),\n            newEmail: newEmail ?? null\n        });\n        return;\n    }\n    const from = MAIL_FROM_EMAIL ?? BREVO_USER;\n    const fromName = MAIL_FROM_NAME ?? \"GM Recall\";\n    const subject = \"Verify your GM Recall email\";\n    const text = `Tap the link to verify your account: ${verifyUrl.toString()}`;\n    const html = `<p>Hi!</p><p>Please confirm your email for GM Recall.</p><p><a href=\"${verifyUrl.toString()}\" target=\"_blank\" rel=\"noreferrer\">Verify email</a></p><p>If you can't click the link, copy and paste this URL:</p><p>${verifyUrl.toString()}</p>`;\n    await transport.sendMail({\n        to,\n        from: fromName ? `\"${fromName}\" <${from}>` : from,\n        subject,\n        text,\n        html\n    });\n}\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKHJzYykvLi9saWIvbWFpbGVyLnRzIiwibWFwcGluZ3MiOiI7Ozs7O0FBQW9DO0FBRXBDLE1BQU0sRUFDSkMsWUFBWSxFQUNaQyxvQkFBb0IsRUFDcEJDLFVBQVUsRUFDVkMsVUFBVSxFQUNWQyxVQUFVLEVBQ1ZDLFVBQVUsRUFDVkMsZUFBZSxFQUNmQyxjQUFjLEVBQ2YsR0FBR0MsUUFBUUMsR0FBRztBQUVmLFNBQVNDO0lBQ1AsT0FBT1YsZ0JBQWdCQyx3QkFBd0I7QUFDakQ7QUFFQSxJQUFJVSxjQUE2QztBQUVqRCxTQUFTQztJQUNQLElBQUlELGFBQWEsT0FBT0E7SUFDeEIsSUFBSSxDQUFDVCxjQUFjLENBQUNDLGNBQWMsQ0FBQ0MsY0FBYyxDQUFDQyxZQUFZO1FBQzVELE9BQU87SUFDVDtJQUNBTSxjQUFjWix1REFBMEIsQ0FBQztRQUN2Q2UsTUFBTVo7UUFDTmEsTUFBTUMsT0FBT2I7UUFDYmMsUUFBUTtRQUNSQyxNQUFNO1lBQ0pDLE1BQU1mO1lBQ05nQixNQUFNZjtRQUNSO0lBQ0Y7SUFDQSxPQUFPTTtBQUNUO0FBRU8sZUFBZVUsc0JBQXNCQyxFQUFVLEVBQUVDLEtBQWEsRUFBRUMsUUFBaUI7SUFDdEYsTUFBTUMsVUFBVWY7SUFDaEIsTUFBTWdCLFlBQVksSUFBSUMsSUFBSSwwQkFBMEJGO0lBQ3BEQyxVQUFVRSxZQUFZLENBQUNDLEdBQUcsQ0FBQyxTQUFTTjtJQUNwQyxJQUFJQyxVQUFVO1FBQ1pFLFVBQVVFLFlBQVksQ0FBQ0MsR0FBRyxDQUFDLFlBQVlMO0lBQ3pDO0lBRUEsTUFBTU0sWUFBWWxCO0lBRWxCLElBQUksQ0FBQ2tCLFdBQVc7UUFDZEMsUUFBUUMsSUFBSSxDQUFDLHdEQUF3RDtZQUNuRVY7WUFDQUksV0FBV0EsVUFBVU8sUUFBUTtZQUM3QlQsVUFBVUEsWUFBWTtRQUN4QjtRQUNBO0lBQ0Y7SUFFQSxNQUFNVSxPQUFPNUIsbUJBQW1CRjtJQUNoQyxNQUFNK0IsV0FBVzVCLGtCQUFrQjtJQUNuQyxNQUFNNkIsVUFBVTtJQUNoQixNQUFNQyxPQUFPLENBQUMscUNBQXFDLEVBQUVYLFVBQVVPLFFBQVEsR0FBRyxDQUFDO0lBQzNFLE1BQU1LLE9BQU8sQ0FBQyxxRUFBcUUsRUFBRVosVUFBVU8sUUFBUSxHQUFHLHNIQUFzSCxFQUFFUCxVQUFVTyxRQUFRLEdBQUcsSUFBSSxDQUFDO0lBRTVQLE1BQU1ILFVBQVVTLFFBQVEsQ0FBQztRQUN2QmpCO1FBQ0FZLE1BQU1DLFdBQVcsQ0FBQyxDQUFDLEVBQUVBLFNBQVMsR0FBRyxFQUFFRCxLQUFLLENBQUMsQ0FBQyxHQUFHQTtRQUM3Q0U7UUFDQUM7UUFDQUM7SUFDRjtBQUNGIiwic291cmNlcyI6WyJ3ZWJwYWNrOi8vZ3JhbmRtYXN0ZXItcmVjYWxsLy4vbGliL21haWxlci50cz83MmM4Il0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBub2RlbWFpbGVyIGZyb20gJ25vZGVtYWlsZXInO1xuXG5jb25zdCB7XG4gIEFQUF9CQVNFX1VSTCxcbiAgTkVYVF9QVUJMSUNfQkFTRV9VUkwsXG4gIEJSRVZPX0hPU1QsXG4gIEJSRVZPX1BPUlQsXG4gIEJSRVZPX1VTRVIsXG4gIEJSRVZPX1BBU1MsXG4gIE1BSUxfRlJPTV9FTUFJTCxcbiAgTUFJTF9GUk9NX05BTUVcbn0gPSBwcm9jZXNzLmVudjtcblxuZnVuY3Rpb24gcmVzb2x2ZUJhc2VVcmwoKSB7XG4gIHJldHVybiBBUFBfQkFTRV9VUkwgPz8gTkVYVF9QVUJMSUNfQkFTRV9VUkwgPz8gJ2h0dHA6Ly9sb2NhbGhvc3Q6MzAwMCc7XG59XG5cbmxldCB0cmFuc3BvcnRlcjogbm9kZW1haWxlci5UcmFuc3BvcnRlciB8IG51bGwgPSBudWxsO1xuXG5mdW5jdGlvbiBnZXRUcmFuc3BvcnRlcigpIHtcbiAgaWYgKHRyYW5zcG9ydGVyKSByZXR1cm4gdHJhbnNwb3J0ZXI7XG4gIGlmICghQlJFVk9fSE9TVCB8fCAhQlJFVk9fUE9SVCB8fCAhQlJFVk9fVVNFUiB8fCAhQlJFVk9fUEFTUykge1xuICAgIHJldHVybiBudWxsO1xuICB9XG4gIHRyYW5zcG9ydGVyID0gbm9kZW1haWxlci5jcmVhdGVUcmFuc3BvcnQoe1xuICAgIGhvc3Q6IEJSRVZPX0hPU1QsXG4gICAgcG9ydDogTnVtYmVyKEJSRVZPX1BPUlQpLFxuICAgIHNlY3VyZTogZmFsc2UsXG4gICAgYXV0aDoge1xuICAgICAgdXNlcjogQlJFVk9fVVNFUixcbiAgICAgIHBhc3M6IEJSRVZPX1BBU1NcbiAgICB9XG4gIH0pO1xuICByZXR1cm4gdHJhbnNwb3J0ZXI7XG59XG5cbmV4cG9ydCBhc3luYyBmdW5jdGlvbiBzZW5kVmVyaWZpY2F0aW9uRW1haWwodG86IHN0cmluZywgdG9rZW46IHN0cmluZywgbmV3RW1haWw/OiBzdHJpbmcpIHtcbiAgY29uc3QgYmFzZVVybCA9IHJlc29sdmVCYXNlVXJsKCk7XG4gIGNvbnN0IHZlcmlmeVVybCA9IG5ldyBVUkwoJy9hcGkvYXV0aC92ZXJpZnktZW1haWwnLCBiYXNlVXJsKTtcbiAgdmVyaWZ5VXJsLnNlYXJjaFBhcmFtcy5zZXQoJ3Rva2VuJywgdG9rZW4pO1xuICBpZiAobmV3RW1haWwpIHtcbiAgICB2ZXJpZnlVcmwuc2VhcmNoUGFyYW1zLnNldCgnbmV3RW1haWwnLCBuZXdFbWFpbCk7XG4gIH1cblxuICBjb25zdCB0cmFuc3BvcnQgPSBnZXRUcmFuc3BvcnRlcigpO1xuXG4gIGlmICghdHJhbnNwb3J0KSB7XG4gICAgY29uc29sZS53YXJuKCdWZXJpZmljYXRpb24gZW1haWwgc3R1YmJlZC4gU2VuZCB0aGlzIGxpbmsgbWFudWFsbHk6Jywge1xuICAgICAgdG8sXG4gICAgICB2ZXJpZnlVcmw6IHZlcmlmeVVybC50b1N0cmluZygpLFxuICAgICAgbmV3RW1haWw6IG5ld0VtYWlsID8/IG51bGxcbiAgICB9KTtcbiAgICByZXR1cm47XG4gIH1cblxuICBjb25zdCBmcm9tID0gTUFJTF9GUk9NX0VNQUlMID8/IEJSRVZPX1VTRVI7XG4gIGNvbnN0IGZyb21OYW1lID0gTUFJTF9GUk9NX05BTUUgPz8gJ0dNIFJlY2FsbCc7XG4gIGNvbnN0IHN1YmplY3QgPSAnVmVyaWZ5IHlvdXIgR00gUmVjYWxsIGVtYWlsJztcbiAgY29uc3QgdGV4dCA9IGBUYXAgdGhlIGxpbmsgdG8gdmVyaWZ5IHlvdXIgYWNjb3VudDogJHt2ZXJpZnlVcmwudG9TdHJpbmcoKX1gO1xuICBjb25zdCBodG1sID0gYDxwPkhpITwvcD48cD5QbGVhc2UgY29uZmlybSB5b3VyIGVtYWlsIGZvciBHTSBSZWNhbGwuPC9wPjxwPjxhIGhyZWY9XCIke3ZlcmlmeVVybC50b1N0cmluZygpfVwiIHRhcmdldD1cIl9ibGFua1wiIHJlbD1cIm5vcmVmZXJyZXJcIj5WZXJpZnkgZW1haWw8L2E+PC9wPjxwPklmIHlvdSBjYW4ndCBjbGljayB0aGUgbGluaywgY29weSBhbmQgcGFzdGUgdGhpcyBVUkw6PC9wPjxwPiR7dmVyaWZ5VXJsLnRvU3RyaW5nKCl9PC9wPmA7XG5cbiAgYXdhaXQgdHJhbnNwb3J0LnNlbmRNYWlsKHtcbiAgICB0byxcbiAgICBmcm9tOiBmcm9tTmFtZSA/IGBcIiR7ZnJvbU5hbWV9XCIgPCR7ZnJvbX0+YCA6IGZyb20sXG4gICAgc3ViamVjdCxcbiAgICB0ZXh0LFxuICAgIGh0bWxcbiAgfSk7XG59XG4iXSwibmFtZXMiOlsibm9kZW1haWxlciIsIkFQUF9CQVNFX1VSTCIsIk5FWFRfUFVCTElDX0JBU0VfVVJMIiwiQlJFVk9fSE9TVCIsIkJSRVZPX1BPUlQiLCJCUkVWT19VU0VSIiwiQlJFVk9fUEFTUyIsIk1BSUxfRlJPTV9FTUFJTCIsIk1BSUxfRlJPTV9OQU1FIiwicHJvY2VzcyIsImVudiIsInJlc29sdmVCYXNlVXJsIiwidHJhbnNwb3J0ZXIiLCJnZXRUcmFuc3BvcnRlciIsImNyZWF0ZVRyYW5zcG9ydCIsImhvc3QiLCJwb3J0IiwiTnVtYmVyIiwic2VjdXJlIiwiYXV0aCIsInVzZXIiLCJwYXNzIiwic2VuZFZlcmlmaWNhdGlvbkVtYWlsIiwidG8iLCJ0b2tlbiIsIm5ld0VtYWlsIiwiYmFzZVVybCIsInZlcmlmeVVybCIsIlVSTCIsInNlYXJjaFBhcmFtcyIsInNldCIsInRyYW5zcG9ydCIsImNvbnNvbGUiLCJ3YXJuIiwidG9TdHJpbmciLCJmcm9tIiwiZnJvbU5hbWUiLCJzdWJqZWN0IiwidGV4dCIsImh0bWwiLCJzZW5kTWFpbCJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///(rsc)/./lib/mailer.ts\n");
 
 /***/ }),
 
@@ -160,7 +300,7 @@ eval("__webpack_require__.a(module, async (__webpack_handle_async_dependencies__
 var __webpack_require__ = require("../../../../webpack-runtime.js");
 __webpack_require__.C(exports);
 var __webpack_exec__ = (moduleId) => (__webpack_require__(__webpack_require__.s = moduleId))
-var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/bcryptjs","vendor-chunks/zod"], () => (__webpack_exec__("(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2Fapi%2Fauth%2Fregister%2Froute&page=%2Fapi%2Fauth%2Fregister%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2Fregister%2Froute.ts&appDir=C%3A%5CUsers%5Ckirk%5CDownloads%5CCoding%20Projects%5Cgmrecall%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5Ckirk%5CDownloads%5CCoding%20Projects%5Cgmrecall&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D!")));
+var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/bcryptjs","vendor-chunks/zod","vendor-chunks/nodemailer"], () => (__webpack_exec__("(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2Fapi%2Fauth%2Fregister%2Froute&page=%2Fapi%2Fauth%2Fregister%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2Fregister%2Froute.ts&appDir=C%3A%5CUsers%5Ckirk%5CDownloads%5CCoding%20Projects%5Cgmrecall%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5Ckirk%5CDownloads%5CCoding%20Projects%5Cgmrecall&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D!")));
 module.exports = __webpack_exports__;
 
 })();

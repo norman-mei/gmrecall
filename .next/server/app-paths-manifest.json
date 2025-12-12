@@ -1,5 +1,6 @@
 {
+  "/page": "app/page.js",
   "/account/page": "app/account/page.js",
-  "/api/auth/verify-email/route": "app/api/auth/verify-email/route.js",
-  "/api/auth/session/route": "app/api/auth/session/route.js"
+  "/api/auth/session/route": "app/api/auth/session/route.js",
+  "/api/user/progress/route": "app/api/user/progress/route.js"
 }
