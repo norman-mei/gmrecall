@@ -200,11 +200,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                       <button
                         key={mode}
                         onClick={() => onThemeModeChange(mode)}
-                        className={`px-3 py-2 rounded-lg text-sm font-semibold border-2 transition-all whitespace-nowrap ${
-                          themeMode === mode
+                        className={`px-3 py-2 rounded-lg text-sm font-semibold border-2 transition-all whitespace-nowrap ${themeMode === mode
                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 shadow-sm'
                             : 'border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-gray-200 hover:border-blue-300 dark:hover:border-blue-500'
-                        }`}
+                          }`}
                         aria-pressed={themeMode === mode}
                       >
                         {mode === 'system' ? 'System' : mode === 'light' ? 'Light' : 'Dark'}
@@ -394,6 +393,53 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                       ))}
                     </div>
                   )}
+                </div>
+
+                {/* Difficulty Breakdown */}
+                <div className="col-span-1 md:col-span-2 bg-gray-50 dark:bg-zinc-700/40 p-4 rounded-xl border border-gray-100 dark:border-zinc-600">
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Performance by Difficulty</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-100 dark:bg-zinc-800/50">
+                        <tr>
+                          <th className="px-3 py-2 rounded-l-lg">Difficulty</th>
+                          <th className="px-3 py-2">Solved</th>
+                          <th className="px-3 py-2">Failed</th>
+                          <th className="px-3 py-2 rounded-r-lg text-right">Win Rate</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(['Easy', 'Medium', 'Hard', 'Very Hard'] as Difficulty[]).map((diff) => {
+                          const diffStats = stats.difficultyStats?.[diff] || { solved: 0, failed: 0 };
+                          const total = diffStats.solved + diffStats.failed;
+                          const rate = total > 0 ? Math.round((diffStats.solved / total) * 100) : 0;
+
+                          if (total === 0) return null; // Hide rows with no data? Or show zeroes? Let's show data if exists.
+                          // Actually, showing all rows is better for completeness, but empty rows look sad. 
+                          // Let's show all for consistency.
+
+                          return (
+                            <tr key={diff} className="border-b border-gray-100 dark:border-zinc-700/50 last:border-0">
+                              <td className="px-3 py-2 font-medium">
+                                <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${difficultyColors[diff].replace('bg-', 'bg-opacity-20 ')}`}>
+                                  {diff}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2 text-green-600 dark:text-green-400 font-semibold">{diffStats.solved}</td>
+                              <td className="px-3 py-2 text-red-600 dark:text-red-400 font-semibold">{diffStats.failed}</td>
+                              <td className="px-3 py-2 text-right font-mono">{rate}%</td>
+                            </tr>
+                          );
+                        })}
+                        {/* Show empty state if no stats at all */}
+                        {!stats.difficultyStats && (
+                          <tr>
+                            <td colSpan={4} className="px-3 py-4 text-center text-gray-500 italic">No difficulty statistics recorded yet.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>

@@ -48,6 +48,7 @@ const DEFAULT_STATS: PlayerStats = {
   bestScore: 0,
   totalGuesses: 0,
   correctGuesses: 0,
+  difficultyStats: {},
 };
 
 const readLocalStorage = <T,>(key: string, fallback: T): T => {
@@ -134,6 +135,20 @@ const mergeProgressPayload = (
     0
   );
 
+  /* Merge Difficulty Stats */
+  const remoteDiff = remote.stats.difficultyStats || {};
+  const localDiff = local.stats.difficultyStats || {};
+  const mergedDifficultyStats: Record<string, { solved: number; failed: number }> = { ...localDiff };
+
+  Object.entries(remoteDiff).forEach(([diff, counts]) => {
+    if (!mergedDifficultyStats[diff]) {
+      mergedDifficultyStats[diff] = { solved: 0, failed: 0 };
+    }
+    // Taking the max is a simple heuristic similar to other stats, assuming strictly increasing
+    mergedDifficultyStats[diff].solved = Math.max(mergedDifficultyStats[diff].solved, counts.solved);
+    mergedDifficultyStats[diff].failed = Math.max(mergedDifficultyStats[diff].failed, counts.failed);
+  });
+
   const mergedStats: PlayerStats = {
     gamesPlayed: Math.max(
       remote.stats.gamesPlayed,
@@ -142,7 +157,8 @@ const mergeProgressPayload = (
     ),
     bestScore: Math.max(remote.stats.bestScore, local.stats.bestScore, bestFromGames),
     totalGuesses: Math.max(remote.stats.totalGuesses, local.stats.totalGuesses),
-    correctGuesses: Math.max(remote.stats.correctGuesses, local.stats.correctGuesses)
+    correctGuesses: Math.max(remote.stats.correctGuesses, local.stats.correctGuesses),
+    difficultyStats: mergedDifficultyStats,
   };
 
   const resumeState = pickLatestResumeState(
@@ -508,11 +524,24 @@ export default function Page() {
     const statsSnapshot = { ...openingStats };
     const nextScore = gameState.score + 1;
 
-    setStats((prev) => ({
-      ...prev,
-      correctGuesses: prev.correctGuesses + 1,
-      totalGuesses: prev.totalGuesses + 1, // Count as a guess
-    }));
+    setStats((prev) => {
+      const currentDiff = completedOpening.difficulty;
+      const oldDiffStats = prev.difficultyStats || {};
+      const currentEntry = oldDiffStats[currentDiff] || { solved: 0, failed: 0 };
+
+      return {
+        ...prev,
+        correctGuesses: prev.correctGuesses + 1,
+        totalGuesses: prev.totalGuesses + 1, // Count as a guess
+        difficultyStats: {
+          ...oldDiffStats,
+          [currentDiff]: {
+            ...currentEntry,
+            solved: currentEntry.solved + 1,
+          }
+        }
+      };
+    });
     setFeedbackState('correct');
 
     setTimeout(() => {
@@ -568,6 +597,23 @@ export default function Page() {
                 outcome: 'failed',
               },
             ]);
+
+            // Update Failed Difficulty Stats
+            setStats((prevStats) => {
+              const currentDiff = prev.currentOpening!.difficulty;
+              const oldDiffStats = prevStats.difficultyStats || {};
+              const currentEntry = oldDiffStats[currentDiff] || { solved: 0, failed: 0 };
+              return {
+                ...prevStats,
+                difficultyStats: {
+                  ...oldDiffStats,
+                  [currentDiff]: {
+                    ...currentEntry,
+                    failed: currentEntry.failed + 1,
+                  }
+                }
+              };
+            });
           }
           handleGameOver({ ...prev, lives: 0, status: 'gameover' });
           return { ...prev, status: 'gameover', lives: 0 };
@@ -1002,336 +1048,336 @@ export default function Page() {
 
   return (
     !mounted ? null :
-    <div className="min-h-screen w-full bg-gray-50 dark:bg-zinc-900 text-gray-800 dark:text-gray-100 transition-colors duration-500 font-sans flex flex-col overflow-hidden">
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        themeMode={settings.themeMode}
-        resolvedIsDark={isDarkMode}
-        onThemeModeChange={(mode) => handleUpdateSettings('themeMode', mode)}
-        settings={settings}
-        updateSettings={handleUpdateSettings}
-        stats={stats}
-        currentStreak={gameState.score}
-        averageScore={averageScore}
-        averageGuessesPerGame={averageGuessesPerGame}
-        wrongGuesses={wrongGuesses}
-        recentGames={recentGames}
-        sessionStats={sessionStats}
-        animationDelay={animationDelay}
-        onAnimationDelayChange={setAnimationDelay}
-        onResetLayout={handleResetLayout}
-      />
-
-      <PasswordModal
-        isOpen={isPasswordModalOpen}
-        onClose={() => setIsPasswordModalOpen(false)}
-        onSuccess={revealSolution}
-      />
-
-      <header className="absolute top-0 w-full p-6 flex justify-end items-start z-40 pointer-events-none">
-        <div className="pointer-events-auto relative flex items-center justify-end gap-3">
-          <Link
-            href="/account"
-            className="group flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-out hover:pr-6 hover:ring-4 ring-blue-500/20"
-            title="Account"
-          >
-            <User className="w-6 h-6 text-gray-700 dark:text-gray-200 transition-transform duration-500 group-hover:scale-110" />
-            <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-bold text-gray-700 dark:text-gray-200 opacity-0 group-hover:max-w-[120px] group-hover:opacity-100 transition-all duration-500 ease-in-out">
-              Account
-            </span>
-          </Link>
-          <button
-            onClick={() => setIsOpeningsOpen(true)}
-            className="group flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-out hover:pr-6 hover:ring-4 ring-blue-500/20"
-            title="Openings"
-          >
-            <Book className="w-6 h-6 text-gray-700 dark:text-gray-200 transition-transform duration-500 group-hover:-rotate-6" />
-            <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-bold text-gray-700 dark:text-gray-200 opacity-0 group-hover:max-w-[120px] group-hover:opacity-100 transition-all duration-500 ease-in-out">
-              Openings
-            </span>
-          </button>
-          <button
-            onClick={() => setIsHistoryOpen(true)}
-            className="group flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-out hover:pr-6 hover:ring-4 ring-blue-500/20"
-            title="History"
-          >
-            <History className="w-6 h-6 text-gray-700 dark:text-gray-200 transition-transform duration-500 group-hover:-rotate-90" />
-            <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-bold text-gray-700 dark:text-gray-200 opacity-0 group-hover:max-w-[120px] group-hover:opacity-100 transition-all duration-500 ease-in-out">
-              History
-            </span>
-          </button>
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="group flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-out hover:pr-6 hover:ring-4 ring-blue-500/20"
-          >
-            <Settings className="w-6 h-6 text-gray-700 dark:text-gray-200 transition-transform duration-500 group-hover:rotate-180" />
-            <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-bold text-gray-700 dark:text-gray-200 opacity-0 group-hover:max-w-[100px] group-hover:opacity-100 transition-all duration-500 ease-in-out">
-              Settings
-            </span>
-          </button>
-        </div>
-      </header>
-
-      <main className="flex-1 flex flex-col items-center justify-center relative p-4">
-        <AnimatePresence mode="wait">
-          {gameState.status === 'playing' && gameState.currentOpening && (
-            <motion.div
-              key="playing"
-              {...({
-                initial: { opacity: 0, scale: 0.95 },
-                animate: { opacity: 1, scale: 1 },
-                exit: { opacity: 0, scale: 1.05 },
-              } as any)}
-              className="w-full max-w-[1600px] flex flex-col xl:flex-row items-start justify-center gap-0 z-10 px-2 md:px-4 relative"
-            >
-              <div className="flex-1 flex flex-col items-center gap-6 min-w-0">
-                <ChessBoardView
-                  key={gameState.currentOpening.name}
-                  opening={gameState.currentOpening}
-                  isDark={isDarkMode}
-                  showCoords={settings.showCoordinates}
-                  animationEnabled={settings.animationEnabled}
-                  animationDelay={animationDelay}
-                  soundEnabled={settings.soundEnabled}
-                  soundVolume={settings.soundVolume}
-                  sidebarWidth={movesSidebarWidth}
-                  onSidebarWidthChange={setMovesSidebarWidth}
-                  rightSidebarWidth={rightSidebarWidth}
-                  onRightSidebarWidthChange={setRightSidebarWidth}
-                >
-                  <GameControls
-                    gameState={gameState}
-                    inputStr={inputStr}
-                    setInputStr={setInputStr}
-                    handleGuess={handleGuess}
-                    useHint={useHint}
-                    feedbackState={feedbackState}
-                    autoAdvanceSeconds={autoAdvanceSeconds}
-                    handleSkipClick={handleSkipClick}
-                    onShowSolution={handleShowSolution}
-                    INITIAL_LIVES={INITIAL_LIVES}
-                    MAX_HINTS={MAX_HINTS}
-                    isLoadedSolved={isLoadedSolved}
-                    isSolutionRevealed={isSolutionRevealed}
-                    onManualAdvance={handleManualAdvance}
-                  />
-                </ChessBoardView>
-              </div>
-            </motion.div>
-          )}
-
-          {gameState.status === 'gameover' && (
-            <motion.div
-              key="gameover"
-              {...({
-                initial: { opacity: 0, scale: 0.9 },
-                animate: { opacity: 1, scale: 1 },
-              } as any)}
-              className="text-center z-10"
-            >
-              <div className="bg-white dark:bg-zinc-800 p-10 rounded-3xl shadow-2xl border border-gray-100 dark:border-zinc-700 max-w-lg mx-auto">
-                <h2 className="text-3xl font-bold mb-2">Game Over!</h2>
-                <p className="text-gray-500 dark:text-gray-400 mb-8">You ran out of lives.</p>
-
-                <div className="py-8 px-12 bg-gray-50 dark:bg-zinc-700/50 rounded-2xl mb-8 border border-dashed border-gray-200 dark:border-zinc-600">
-                  <p className="text-sm text-gray-400 uppercase tracking-wider font-bold mb-2">Final Score</p>
-                  <p className="text-6xl font-black text-blue-600 dark:text-blue-400">{gameState.score}</p>
-                </div>
-
-                <div className="mb-8">
-                  <p className="text-sm text-gray-500 mb-2 font-medium">Correctly identified:</p>
-                  <div className="flex flex-wrap gap-2 justify-center max-h-32 overflow-y-auto custom-scrollbar">
-                    {gameState.history.map((op, i) => (
-                      <span
-                        key={i}
-                        className="text-xs px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded"
-                      >
-                        {op}
-                      </span>
-                    ))}
-                    {gameState.history.length === 0 && (
-                      <span className="text-xs text-gray-400 italic">None</span>
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  onClick={startGame}
-                  className="w-full px-8 py-4 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-gray-900 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2"
-                >
-                  <RefreshCw size={20} /> Try Again
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {gameState.status === 'playing' && !gameState.currentOpening && (
-          <div className="text-center text-gray-500 dark:text-gray-400 mt-6">
-            <p>Loading next opening...</p>
-          </div>
-        )}
-
-        <OpeningsModal
-          isOpen={isOpeningsOpen}
-          onClose={() => setIsOpeningsOpen(false)}
-          solvedOpenings={solvedOpeningsSet}
+      <div className="min-h-screen w-full bg-gray-50 dark:bg-zinc-900 text-gray-800 dark:text-gray-100 transition-colors duration-500 font-sans flex flex-col overflow-hidden">
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          themeMode={settings.themeMode}
+          resolvedIsDark={isDarkMode}
+          onThemeModeChange={(mode) => handleUpdateSettings('themeMode', mode)}
+          settings={settings}
+          updateSettings={handleUpdateSettings}
+          stats={stats}
+          currentStreak={gameState.score}
+          averageScore={averageScore}
+          averageGuessesPerGame={averageGuessesPerGame}
+          wrongGuesses={wrongGuesses}
+          recentGames={recentGames}
+          sessionStats={sessionStats}
+          animationDelay={animationDelay}
+          onAnimationDelayChange={setAnimationDelay}
+          onResetLayout={handleResetLayout}
         />
 
-        {isHistoryOpen && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-            onClick={() => setIsHistoryOpen(false)}
-          >
-            <div
-              className="w-full max-w-3xl bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-zinc-700 max-h-[80vh] overflow-hidden flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-zinc-800 shrink-0">
-                <div>
-                  <h3 className="text-xl font-black text-gray-900 dark:text-white">History</h3>
-                </div>
-                <button
-                  onClick={() => setIsHistoryOpen(false)}
-                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-gray-300"
-                >
-                  <XCircle size={22} />
-                </button>
-              </div>
+        <PasswordModal
+          isOpen={isPasswordModalOpen}
+          onClose={() => setIsPasswordModalOpen(false)}
+          onSuccess={revealSolution}
+        />
 
-              <div className="px-6 pt-4 shrink-0 space-y-3">
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      placeholder="Search history..."
-                      value={historySearch}
-                      onChange={(e) => setHistorySearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 bg-gray-100 dark:bg-zinc-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+        <header className="absolute top-0 w-full p-6 flex justify-end items-start z-40 pointer-events-none">
+          <div className="pointer-events-auto relative flex items-center justify-end gap-3">
+            <Link
+              href="/account"
+              className="group flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-out hover:pr-6 hover:ring-4 ring-blue-500/20"
+              title="Account"
+            >
+              <User className="w-6 h-6 text-gray-700 dark:text-gray-200 transition-transform duration-500 group-hover:scale-110" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-bold text-gray-700 dark:text-gray-200 opacity-0 group-hover:max-w-[120px] group-hover:opacity-100 transition-all duration-500 ease-in-out">
+                Account
+              </span>
+            </Link>
+            <button
+              onClick={() => setIsOpeningsOpen(true)}
+              className="group flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-out hover:pr-6 hover:ring-4 ring-blue-500/20"
+              title="Openings"
+            >
+              <Book className="w-6 h-6 text-gray-700 dark:text-gray-200 transition-transform duration-500 group-hover:-rotate-6" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-bold text-gray-700 dark:text-gray-200 opacity-0 group-hover:max-w-[120px] group-hover:opacity-100 transition-all duration-500 ease-in-out">
+                Openings
+              </span>
+            </button>
+            <button
+              onClick={() => setIsHistoryOpen(true)}
+              className="group flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-out hover:pr-6 hover:ring-4 ring-blue-500/20"
+              title="History"
+            >
+              <History className="w-6 h-6 text-gray-700 dark:text-gray-200 transition-transform duration-500 group-hover:-rotate-90" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-bold text-gray-700 dark:text-gray-200 opacity-0 group-hover:max-w-[120px] group-hover:opacity-100 transition-all duration-500 ease-in-out">
+                History
+              </span>
+            </button>
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="group flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-out hover:pr-6 hover:ring-4 ring-blue-500/20"
+            >
+              <Settings className="w-6 h-6 text-gray-700 dark:text-gray-200 transition-transform duration-500 group-hover:rotate-180" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-bold text-gray-700 dark:text-gray-200 opacity-0 group-hover:max-w-[100px] group-hover:opacity-100 transition-all duration-500 ease-in-out">
+                Settings
+              </span>
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 flex flex-col items-center justify-center relative p-4">
+          <AnimatePresence mode="wait">
+            {gameState.status === 'playing' && gameState.currentOpening && (
+              <motion.div
+                key="playing"
+                {...({
+                  initial: { opacity: 0, scale: 0.95 },
+                  animate: { opacity: 1, scale: 1 },
+                  exit: { opacity: 0, scale: 1.05 },
+                } as any)}
+                className="w-full max-w-[1600px] flex flex-col xl:flex-row items-start justify-center gap-0 z-10 px-2 md:px-4 relative"
+              >
+                <div className="flex-1 flex flex-col items-center gap-6 min-w-0">
+                  <ChessBoardView
+                    key={gameState.currentOpening.name}
+                    opening={gameState.currentOpening}
+                    isDark={isDarkMode}
+                    showCoords={settings.showCoordinates}
+                    animationEnabled={settings.animationEnabled}
+                    animationDelay={animationDelay}
+                    soundEnabled={settings.soundEnabled}
+                    soundVolume={settings.soundVolume}
+                    sidebarWidth={movesSidebarWidth}
+                    onSidebarWidthChange={setMovesSidebarWidth}
+                    rightSidebarWidth={rightSidebarWidth}
+                    onRightSidebarWidthChange={setRightSidebarWidth}
+                  >
+                    <GameControls
+                      gameState={gameState}
+                      inputStr={inputStr}
+                      setInputStr={setInputStr}
+                      handleGuess={handleGuess}
+                      useHint={useHint}
+                      feedbackState={feedbackState}
+                      autoAdvanceSeconds={autoAdvanceSeconds}
+                      handleSkipClick={handleSkipClick}
+                      onShowSolution={handleShowSolution}
+                      INITIAL_LIVES={INITIAL_LIVES}
+                      MAX_HINTS={MAX_HINTS}
+                      isLoadedSolved={isLoadedSolved}
+                      isSolutionRevealed={isSolutionRevealed}
+                      onManualAdvance={handleManualAdvance}
                     />
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <circle cx="11" cy="11" r="8" />
-                        <path d="m21 21-4.3-4.3" />
-                      </svg>
+                  </ChessBoardView>
+                </div>
+              </motion.div>
+            )}
+
+            {gameState.status === 'gameover' && (
+              <motion.div
+                key="gameover"
+                {...({
+                  initial: { opacity: 0, scale: 0.9 },
+                  animate: { opacity: 1, scale: 1 },
+                } as any)}
+                className="text-center z-10"
+              >
+                <div className="bg-white dark:bg-zinc-800 p-10 rounded-3xl shadow-2xl border border-gray-100 dark:border-zinc-700 max-w-lg mx-auto">
+                  <h2 className="text-3xl font-bold mb-2">Game Over!</h2>
+                  <p className="text-gray-500 dark:text-gray-400 mb-8">You ran out of lives.</p>
+
+                  <div className="py-8 px-12 bg-gray-50 dark:bg-zinc-700/50 rounded-2xl mb-8 border border-dashed border-gray-200 dark:border-zinc-600">
+                    <p className="text-sm text-gray-400 uppercase tracking-wider font-bold mb-2">Final Score</p>
+                    <p className="text-6xl font-black text-blue-600 dark:text-blue-400">{gameState.score}</p>
+                  </div>
+
+                  <div className="mb-8">
+                    <p className="text-sm text-gray-500 mb-2 font-medium">Correctly identified:</p>
+                    <div className="flex flex-wrap gap-2 justify-center max-h-32 overflow-y-auto custom-scrollbar">
+                      {gameState.history.map((op, i) => (
+                        <span
+                          key={i}
+                          className="text-xs px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded"
+                        >
+                          {op}
+                        </span>
+                      ))}
+                      {gameState.history.length === 0 && (
+                        <span className="text-xs text-gray-400 italic">None</span>
+                      )}
                     </div>
                   </div>
-                  <select
-                    value={historySort}
-                    onChange={(e) => setHistorySort(e.target.value)}
-                    className="px-3 py-2 bg-gray-100 dark:bg-zinc-800 border-none rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
-                  >
-                    <option value="recent">Recent</option>
-                    <option value="oldest">Oldest</option>
-                    <option value="a-z">A-Z</option>
-                    <option value="z-a">Z-A</option>
-                    <option value="status-desc">Status (Priority)</option>
-                    <option value="status-asc">Status (Solved)</option>
-                  </select>
-                </div>
-              </div>
 
-              <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
-                {sessionHistory.length === 0 ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 italic text-center py-8">
-                    No openings played in this session yet.
-                  </p>
-                ) : (
-                  <div className="flex justify-end mb-2">
-                    <button
-                      onClick={() => setSessionHistory([])}
-                      className="text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors flex items-center gap-1.5 font-medium"
-                      title="Clear History"
-                    >
-                      <Trash2 size={14} />
-                      Clear History
-                    </button>
+                  <button
+                    onClick={startGame}
+                    className="w-full px-8 py-4 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-gray-900 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2"
+                  >
+                    <RefreshCw size={20} /> Try Again
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {gameState.status === 'playing' && !gameState.currentOpening && (
+            <div className="text-center text-gray-500 dark:text-gray-400 mt-6">
+              <p>Loading next opening...</p>
+            </div>
+          )}
+
+          <OpeningsModal
+            isOpen={isOpeningsOpen}
+            onClose={() => setIsOpeningsOpen(false)}
+            solvedOpenings={solvedOpeningsSet}
+          />
+
+          {isHistoryOpen && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+              onClick={() => setIsHistoryOpen(false)}
+            >
+              <div
+                className="w-full max-w-3xl bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-zinc-700 max-h-[80vh] overflow-hidden flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-zinc-800 shrink-0">
+                  <div>
+                    <h3 className="text-xl font-black text-gray-900 dark:text-white">History</h3>
                   </div>
-                )}
-                {filteredAndSortedHistory.map((entry, idx) => (
-                  <div key={`${entry.name}-${idx}`} className="group">
-                    <div className="flex flex-col gap-3 py-2">
-                      <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span
-                              className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${entry.outcome === 'solved'
-                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                : entry.outcome === 'skipped'
-                                  ? 'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-gray-400'
-                                  : entry.outcome === 'unfinished'
-                                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                }`}
-                            >
-                              {entry.outcome}
+                  <button
+                    onClick={() => setIsHistoryOpen(false)}
+                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-gray-300"
+                  >
+                    <XCircle size={22} />
+                  </button>
+                </div>
+
+                <div className="px-6 pt-4 shrink-0 space-y-3">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        placeholder="Search history..."
+                        value={historySearch}
+                        onChange={(e) => setHistorySearch(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 bg-gray-100 dark:bg-zinc-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                      />
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <circle cx="11" cy="11" r="8" />
+                          <path d="m21 21-4.3-4.3" />
+                        </svg>
+                      </div>
+                    </div>
+                    <select
+                      value={historySort}
+                      onChange={(e) => setHistorySort(e.target.value)}
+                      className="px-3 py-2 bg-gray-100 dark:bg-zinc-800 border-none rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+                    >
+                      <option value="recent">Recent</option>
+                      <option value="oldest">Oldest</option>
+                      <option value="a-z">A-Z</option>
+                      <option value="z-a">Z-A</option>
+                      <option value="status-desc">Status (Priority)</option>
+                      <option value="status-asc">Status (Solved)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
+                  {sessionHistory.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 italic text-center py-8">
+                      No openings played in this session yet.
+                    </p>
+                  ) : (
+                    <div className="flex justify-end mb-2">
+                      <button
+                        onClick={() => setSessionHistory([])}
+                        className="text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors flex items-center gap-1.5 font-medium"
+                        title="Clear History"
+                      >
+                        <Trash2 size={14} />
+                        Clear History
+                      </button>
+                    </div>
+                  )}
+                  {filteredAndSortedHistory.map((entry, idx) => (
+                    <div key={`${entry.name}-${idx}`} className="group">
+                      <div className="flex flex-col gap-3 py-2">
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span
+                                className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${entry.outcome === 'solved'
+                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                  : entry.outcome === 'skipped'
+                                    ? 'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-gray-400'
+                                    : entry.outcome === 'unfinished'
+                                      ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                  }`}
+                              >
+                                {entry.outcome}
+                              </span>
+                            </div>
+                            <h4 className="text-lg font-bold text-gray-900 dark:text-white truncate">
+                              {entry.outcome === 'solved' ? entry.name : '???'}
+                            </h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1 break-all">
+                              {entry.moves}
+                            </p>
+                          </div>
+
+                          <button
+                            onClick={() => loadOpening(entry.name, entry.moves, entry.outcome)}
+                            disabled={gameState.currentOpening?.name === entry.name}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors shrink-0 ${gameState.currentOpening?.name === entry.name
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-zinc-800 dark:text-gray-500'
+                              : 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40'
+                              }`}
+                          >
+                            {gameState.currentOpening?.name === entry.name ? 'Loaded' : 'Load'}
+                          </button>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400 justify-end">
+                          <div className="flex items-center gap-3 ml-auto">
+                            {entry.livesLost > 0 && (
+                              <span className="flex items-center gap-1 text-red-500 dark:text-red-400">
+                                <Heart size={12} className="fill-current" /> -{entry.livesLost}
+                              </span>
+                            )}
+                            {entry.hintsUsed > 0 && (
+                              <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+                                <Lightbulb size={12} className="fill-current" /> {entry.hintsUsed}
+                              </span>
+                            )}
+                            <span className="font-mono opacity-60">
+                              Score: {entry.scoreAfter}
                             </span>
                           </div>
-                          <h4 className="text-lg font-bold text-gray-900 dark:text-white truncate">
-                            {entry.outcome === 'solved' ? entry.name : '???'}
-                          </h4>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1 break-all">
-                            {entry.moves}
-                          </p>
-                        </div>
-
-                        <button
-                          onClick={() => loadOpening(entry.name, entry.moves, entry.outcome)}
-                          disabled={gameState.currentOpening?.name === entry.name}
-                          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors shrink-0 ${gameState.currentOpening?.name === entry.name
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-zinc-800 dark:text-gray-500'
-                            : 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40'
-                            }`}
-                        >
-                          {gameState.currentOpening?.name === entry.name ? 'Loaded' : 'Load'}
-                        </button>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400 justify-end">
-                        <div className="flex items-center gap-3 ml-auto">
-                          {entry.livesLost > 0 && (
-                            <span className="flex items-center gap-1 text-red-500 dark:text-red-400">
-                              <Heart size={12} className="fill-current" /> -{entry.livesLost}
-                            </span>
-                          )}
-                          {entry.hintsUsed > 0 && (
-                            <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
-                              <Lightbulb size={12} className="fill-current" /> {entry.hintsUsed}
-                            </span>
-                          )}
-                          <span className="font-mono opacity-60">
-                            Score: {entry.scoreAfter}
-                          </span>
                         </div>
                       </div>
+                      {idx < filteredAndSortedHistory.length - 1 && (
+                        <hr className="border-gray-100 dark:border-zinc-800 mt-2" />
+                      )}
                     </div>
-                    {idx < filteredAndSortedHistory.length - 1 && (
-                      <hr className="border-gray-100 dark:border-zinc-800 mt-2" />
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div >
               </div >
             </div >
-          </div >
-        )
-        }
+          )
+          }
 
-        <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-          <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl dark:bg-blue-500/5"></div>
-          <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-3xl dark:bg-purple-500/5"></div>
-        </div>
-      </main >
-    </div >
+          <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+            <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl dark:bg-blue-500/5"></div>
+            <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-3xl dark:bg-purple-500/5"></div>
+          </div>
+        </main >
+      </div >
   );
 }

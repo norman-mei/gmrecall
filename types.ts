@@ -34,6 +34,7 @@ export interface PlayerStats {
   bestScore: number;
   totalGuesses: number;
   correctGuesses: number;
+  difficultyStats?: Record<string, { solved: number; failed: number }>;
 }
 
 export interface GameState {
