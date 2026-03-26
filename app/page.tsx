@@ -178,10 +178,39 @@ const mergeProgressPayload = (
   };
 };
 
+const hasMeaningfulResumeProgress = (
+  sessionHistory: SessionEntry[],
+  resumeState: ResumeState | null | undefined,
+) =>
+  sessionHistory.length > 0 ||
+  (resumeState?.history.length ?? 0) > 0 ||
+  (resumeState?.score ?? 0) > 0;
+
+const shouldRestoreResumeState = (
+  sessionHistory: SessionEntry[],
+  resumeState: ResumeState | null | undefined,
+) =>
+  Boolean(
+    resumeState?.status === 'playing' &&
+      resumeState.currentOpening &&
+      hasMeaningfulResumeProgress(sessionHistory, resumeState),
+  );
+
 export default function Page() {
   const { user, loading: authLoading } = useAuth();
   const [mounted, setMounted] = useState(false);
   const storedResume = readLocalStorage<ResumeState | null>('chess-resume-state', null);
+  const storedStats = readLocalStorage('chess-stats', DEFAULT_STATS);
+  const storedGameHistory = readLocalStorage<GameRecord[]>('chess-history', []);
+  const storedSessionHistory = readLocalStorage<SessionEntry[]>('chess-session-history', []);
+  const shouldRestoreStoredResume = shouldRestoreResumeState(
+    storedSessionHistory,
+    storedResume,
+  );
+  const initialExcludedOpeningNames =
+    !shouldRestoreStoredResume && storedResume?.currentOpening
+      ? [storedResume.currentOpening.name]
+      : [];
   const [systemPrefersDark, setSystemPrefersDark] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -199,15 +228,11 @@ export default function Page() {
     );
     return { ...DEFAULT_SETTINGS, ...stored, difficulty: storedDifficulty };
   });
-  const [stats, setStats] = useState<PlayerStats>(() =>
-    readLocalStorage('chess-stats', DEFAULT_STATS),
-  );
-  const [gameHistory, setGameHistory] = useState<GameRecord[]>(() =>
-    readLocalStorage('chess-history', []),
-  );
+  const [stats, setStats] = useState<PlayerStats>(() => storedStats);
+  const [gameHistory, setGameHistory] = useState<GameRecord[]>(() => storedGameHistory);
 
   const [gameState, setGameState] = useState<GameState>(() => {
-    if (storedResume?.status === 'playing' && storedResume.currentOpening) {
+    if (shouldRestoreStoredResume && storedResume?.currentOpening) {
       return {
         status: 'playing',
         currentOpening: storedResume.currentOpening,
@@ -230,9 +255,7 @@ export default function Page() {
   });
 
   const [feedbackState, setFeedbackState] = useState<'none' | 'correct' | 'incorrect'>('none');
-  const [sessionHistory, setSessionHistory] = useState<SessionEntry[]>(() =>
-    readLocalStorage('chess-session-history', []),
-  );
+  const [sessionHistory, setSessionHistory] = useState<SessionEntry[]>(() => storedSessionHistory);
   const [hasHydratedAccount, setHasHydratedAccount] = useState(false);
   const [isSyncingAccount, setIsSyncingAccount] = useState(false);
   const [openingStats, setOpeningStats] = useState<{ livesLost: number; hintsUsed: number }>(() =>
@@ -361,7 +384,13 @@ export default function Page() {
         setStats(merged.stats);
         setGameHistory(merged.gameHistory);
         setSessionHistory(merged.sessionHistory);
-        if (merged.resumeState?.currentOpening) {
+        if (
+          shouldRestoreResumeState(
+            merged.sessionHistory,
+            merged.resumeState,
+          ) &&
+          merged.resumeState?.currentOpening
+        ) {
           setGameState((prev) => ({
             ...prev,
             status: merged.resumeState?.status ?? 'playing',
@@ -450,14 +479,14 @@ export default function Page() {
   // Auto-start the game on initial load
   useEffect(() => {
     if (gameState.status === 'idle') {
-      startGame();
+      beginGame(initialExcludedOpeningNames);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startGame = () => {
+  const beginGame = (excludeNames: string[] = []) => {
     clearAutoAdvance();
-    const firstOpening = getRandomOpening([], settings.difficulty, buildAdaptiveContext());
+    const firstOpening = getRandomOpening(excludeNames, settings.difficulty, buildAdaptiveContext());
     setGameState({
       status: 'playing',
       currentOpening: firstOpening,
@@ -470,6 +499,10 @@ export default function Page() {
     setFeedbackState('none');
     setInputStr('');
     setOpeningStats({ livesLost: 0, hintsUsed: 0 });
+  };
+
+  const startGame = () => {
+    beginGame();
   };
 
   const useHint = () => {
